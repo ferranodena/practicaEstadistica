@@ -1,0 +1,88 @@
+## Carregar el dataset
+
+```{r}
+data <- read.csv(".\\netejaDataset\\neteja_bàsica.csv")
+```	
+
+## Correlació entre les variables
+
+```{r}
+# 1. Veiem les classes de cada columna
+str(data)
+
+# 2. Filtrem només les columnes numèriques
+data_numeric <- data[, sapply(data, is.numeric)]
+
+# 3. Calculem la matriu de correlació només amb les columnes numèriques
+cor_matrix <- cor(data_numeric, use = "complete.obs")
+
+# 4. Mostrem la matriu de correlació
+print(cor_matrix)
+```
+
+## Gràfic de dispersió
+```{r}
+plot(data$variable1, data$variable2)
+```
+
+## Gràfic de dispersió amb línia de regressió
+```{r}
+plot(data$accommodates, data$square_meters)
+abline(lm(data$square_meters ~ data$accommodates))
+```
+
+## Preu per metre quadrat per districte
+```{r}
+# Comprovar els noms de les columnes
+colnames(data)
+
+# Filtrar les files on square_feet no és NA ni 0
+data_filtered <- data[!is.na(data$square_meters) & data$square_meters > 0, ]
+
+# Verificar si tenim dades suficients després del filtratge
+if(nrow(data_filtered) > 0) {
+  # Calcular el preu per metre quadrat
+  data_filtered$price_per_sqft <- data_filtered$price / data_filtered$square_meters
+  
+  # Calcular la mitjana del preu per metre quadrat per districte
+  district_price_per_sqft <- aggregate(price_per_sqft ~ neighbourhood, data = data_filtered, FUN = mean)
+  
+  # Ordenar els districtes per preu per metre quadrat (en ordre descendent)
+  district_price_per_sqft <- district_price_per_sqft[order(district_price_per_sqft$price_per_sqft, decreasing = TRUE), ]
+  
+  # Crear el barplot
+  barplot(district_price_per_sqft$price_per_sqft, 
+          names.arg = district_price_per_sqft$neighbourhood,
+          col = "lightgreen",
+          main = "Preu mitjà per metre quadrat per districte",
+          xlab = "Districte",
+          ylab = "Preu per metre quadrat (€/m²)",
+          las = 2,  # Etiquetes horitzontals
+          cex.names = 0.8)  # Mida de les etiquetes
+  
+  # Afegir etiquetes de valor
+  text(x = seq_along(district_price_per_sqft$price_per_sqft) - 0.5, 
+       y = district_price_per_sqft$price_per_sqft + max(district_price_per_sqft$price_per_sqft)*0.03,
+       labels = round(district_price_per_sqft$price_per_sqft, 2),  # Mostrar 2 decimals
+       cex = 0.7,
+       pos = 3)
+  
+  # Imprimir taula amb resultats
+  print(district_price_per_sqft)
+} else {
+  print("No hi ha prou dades amb valors vàlids de 'square_feet' per calcular el preu per metre quadrat.")
+}
+```
+
+### Piechart amb el percentatge de propietats per tipus de propietat
+```{r}
+# Calcular el percentatge de propietats per tipus de propietat
+property_type_percent <- prop.table(table(data$property_type)) * 100
+
+# Crear el piechart
+pie(property_type_percent,
+    main = "Percentatge de propietats per tipus de propietat",
+    col = rainbow(length(property_type_percent)),  # Colors de l'arc de l'arc de cada sector
+    cex = 0.8,  # Mida de les etiquetes
+    labels = paste(names(property_type_percent), " (", round(property_type_percent, 2), "%)", sep = ""))  # Etiquetes amb percentatge
+```
