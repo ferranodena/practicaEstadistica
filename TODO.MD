@@ -11,10 +11,14 @@ El gràfic que hi ha dins de la carpeta de netejaDataset l'ha fet el chat i no l
 Més enllà hem de preparar la presentació que farem la setmana que ve, penseu si s'ha de fer un PowerPoint o què i què s'hi ha de dir, que entenc que parlar de la nostra dataset i què en volem treure
 
 ## CAL FER (feu-ho porfa)
-- [] Mirar les correlacions entre variables si corresponen (no estic segur que ho hagi fet bé, està l'arxiu de correlations.rmd)
-- [] Buscar desesperadament dins de les variables si hi ha alguna manera de constestar les preguntes que ens hem fet
-- [] Netejar més les dades del dataset.
-- [] Pensar què dir a la presentació.
-- [] Fer o mirar les tasques assignades.
-- [] Debatre si generar dades falses de square_metres.
-- [] Preparar la presentació de la setmana que ve.
+- [ ] Mirar les correlacions entre variables si corresponen (no estic segur que ho hagi fet bé, està l'arxiu de correlations.rmd)
+
+### De la retroacció del profe
+
+- [ ] !! Pensar noves preguntes que siguin "challenging", relacionades amb ammenities i price (també afegir-ho a la llista de tasques)
+- [ ] Les preguntes simples haurien de ser contestades a la descriptive analysis, i no ser part de les preguntes a contestar
+- [ ] Canviar distribució de tasques: canviar la de Ferran Òdena i afegir-ne una comuna pel final d'anàlisi dels resultats
+ 
+- [ ] Refer per complet el descriptive analysis (només conté descripcions de les variables, no hi ha anàlisi):
+    - [ ] Posar les variables descrites en un subapartat anomenat "Dataset variables"
+    - [ ] Ser més sistemàtic en la descripció de les variables; cal dir si són categorical o numeric, si categorical dir les categories i el nombre de categories, si numeric dir el rang de valors
