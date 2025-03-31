@@ -8,7 +8,7 @@ print("Iniciant el procés de neteja i transformació de dades...")
 df = pd.read_csv("..\\barcelona_listings.csv")
 
 # 2. Reduir la mida del dataset (p.ex. agafant només el 25% de les files)
-df = df.sample(frac=0.25, random_state=42)
+df = df.sample(n= 19000, random_state=42)
 print(f"Dataset reduït a {df.shape[0]} files (25% de l'original)")
 print(f"Dataset carregat amb {df.shape[0]} files i {df.shape[1]} columnes")
 

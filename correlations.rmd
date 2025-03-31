@@ -86,3 +86,132 @@ pie(property_type_percent,
     cex = 0.8,  # Mida de les etiquetes
     labels = paste(names(property_type_percent), " (", round(property_type_percent, 2), "%)", sep = ""))  # Etiquetes amb percentatge
 ```
+
+## Piechart per veure els percentatge de host_response_time
+```{r}
+# Calcular el percentatge de propietats per tipus de propietat si hi ha dadew
+property_type_percent <- prop.table(table(data$host_response_time)) * 100
+
+# Crear el piechart
+pie(property_type_percent,
+    main = "Percentatge de propietats per tipus de propietat",
+    col = rainbow(length(property_type_percent)),  # Colors de l'arc de l'arc de cada sector
+    cex = 0.8,  # Mida de les etiquetes
+    labels = paste(names(property_type_percent), " (", round(property_type_percent, 2), "%)", sep = ""))  # Etiquetes amb percentatge
+
+```
+
+## Histograma de host_listings_count
+```{r}
+# Comprovar si hi ha dades vàlides per host_listings_count
+if (any(!is.na(data$host_listings_count) & data$host_listings_count > 0)) {
+  # Filtrar les files on host_listings_count no és NA ni 0
+  data_filtered <- data[!is.na(data$host_listings_count) & data$host_listings_count > 0 & data$host_listings_count <= 50, ]
+  
+  # Crear l'histograma
+  hist(data_filtered$host_listings_count,
+       main = "Histograma de host_listings_count (1-50)",
+       xlab = "Host Listings Count",
+       ylab = "Frecuencia",
+       col = "lightblue",
+       breaks = seq(min(data_filtered$host_listings_count), max(data_filtered$host_listings_count), by = 1))  # Nombre de bins
+} else {
+  print("No hi ha dades vàlides per host_listings_count.")
+}
+```
+## Piechart de host_has_profile_pic
+```{r}
+# Comprovar si hi ha dades vàlides per host_has_profile_pic
+if (any(!is.na(data$host_has_profile_pic))) {
+  # Calcular el percentatge de propietats per host_has_profile_pic
+  host_profile_pic_percent <- prop.table(table(data$host_has_profile_pic)) * 100
+  
+  # Crear el piechart
+  pie(host_profile_pic_percent,
+      main = "Percentatge de propietats amb imatge de perfil d'amfitrió",
+      col = rainbow(length(host_profile_pic_percent)),  # Colors de l'arc de l'arc de cada sector
+      cex = 0.8,  # Mida de les etiquetes
+      labels = paste(names(host_profile_pic_percent), " (", round(host_profile_pic_percent, 2), "%)", sep = ""))  # Etiquetes amb percentatge
+} else {
+  print("No hi ha dades vàlides per host_has_profile_pic.")
+}
+```
+## Histograma de availability_365
+```{r}
+# Comprovar si hi ha dades vàlides per availability_365
+if (any(!is.na(data$availability_365) & data$availability_365 > 0)) {
+  # Filtrar les files on availability_365 no és NA ni 0
+  data_filtered <- data[!is.na(data$availability_365) & data$availability_365 > 0, ]
+  
+  # Crear l'histograma
+  hist(data_filtered$availability_365,
+       main = "Histograma de availability_365",
+       xlab = "Availability (dies a l'any)",
+       ylab = "Frecuencia",
+       col = "lightblue",
+       breaks = seq(min(data_filtered$availability_365), max(data_filtered$availability_365), by = 1))  # Nombre de bins
+} else {
+  print("No hi ha dades vàlides per availability_365.")
+}
+```
+## Histograma de review_scores_rating (estan de l'1 al 100)
+```{r}
+# Comprovar si hi ha dades vàlides per review_scores_rating
+if (any(!is.na(data$review_scores_rating) & data$review_scores_rating > 0)) {
+  # Filtrar les files on review_scores_rating no és NA ni 0
+  data_filtered <- data[!is.na(data$review_scores_rating) & data$review_scores_rating > 0, ]
+  
+  # Crear l'histograma
+  hist(data_filtered$review_scores_rating,
+       main = "Histograma de review_scores_rating",
+       xlab = "Review Scores Rating",
+       ylab = "Frecuencia",
+       col = "lightblue",
+       breaks = seq(min(data_filtered$review_scores_rating), max(data_filtered$review_scores_rating), by = 1))  # Nombre de bins
+} else {
+  print("No hi ha dades vàlides per review_scores_rating.")
+}
+```
+## Gràfic de dispersió entre availability_365 i review_scores_rating i linia de regressió
+```{r}
+# Comprovar si tenim el paquet 'hexbin'
+if (!requireNamespace("hexbin", quietly = TRUE)) {
+  install.packages("hexbin")
+}
+library(hexbin)
+
+# Comprovar si hi ha dades vàlides
+if (any(!is.na(data$availability_365) & !is.na(data$review_scores_rating))) {
+  # Filtrar les files on availability_365 i review_scores_rating no són NA
+  data_filtered <- data[!is.na(data$availability_365) & !is.na(data$review_scores_rating), ]
+  
+  # Crear un gràfic hexagonal
+  bin <- hexbin(data_filtered$availability_365, data_filtered$review_scores_rating, 
+                xbins = 30)
+  
+  # Representar el gràfic
+  plot(bin, main = "Densitat de la correlació disponibilitat - puntuació",
+       xlab = "Disponibilitat (dies a l'any)",
+       ylab = "Puntuació de les ressenyes",
+       colramp = colorRampPalette(c("lightblue", "darkblue")))
+  
+  # Afegir la línia de regressió
+  fit <- lm(review_scores_rating ~ availability_365, data = data_filtered)
+  abline(fit, col = "red", lwd = 2)
+  
+  # Mostrar coeficient de correlació i p-valor
+  correlation <- cor.test(data_filtered$availability_365, data_filtered$review_scores_rating)
+  text(max(data_filtered$availability_365) * 0.7, min(data_filtered$review_scores_rating) + 5, 
+       paste("Correlació:", round(correlation$estimate, 3), 
+             "\np-valor:", format.pval(correlation$p.value, digits = 3)),
+       pos = 4, col = "darkred")
+} else {
+  print("No hi ha dades vàlides per availability_365 o review_scores_rating.")
+}
+```
+## Gràfic de dispersió entre number:of_reviews i review_scores_rating i linia de regressió
+```{r}
+
+plot(data$number_of_reviews, data$review_scores_rating)
+abline(lm(data$review_scores_rating ~ data$number_of_reviews))
+```
