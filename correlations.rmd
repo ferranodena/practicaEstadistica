@@ -1,7 +1,7 @@
 ## Carregar el dataset
 
 ```{r}
-data <- read.csv(".\\netejaDataset\\neteja_bàsica.csv")
+data <- read.csv(".\\base_dades_districtes.csv")
 ```	
 
 ## Correlació entre les variables
