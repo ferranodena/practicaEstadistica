@@ -1,7 +1,7 @@
 ## Carregar el dataset
 
 ```{r}
-data <- read.csv(".\\base_dades_districtes.csv")
+data <- read.csv(".\\base_dades_districtes_amb_professionalism.csv")
 ```	
 
 ## Correlació entre les variables
@@ -351,4 +351,39 @@ if (any(!is.na(data$review_scores_rating))) {
 } else {
   print("No hi ha dades vàlides per review_scores_rating.")
 }
+```
+
+## Mapa de correlacions entre totes les variables numèriques
+
+```{r}
+# Carregar les llibreries necessàries
+if (!requireNamespace("corrplot", quietly = TRUE)) {
+  install.packages("corrplot")
+}
+library(corrplot)
+
+# Filtrem només les columnes numèriques (excloent les que hem creat pel càlcul del professionalism)
+cols_to_exclude <- c("availability_score", "listings_score", "response_time_score")
+data_numeric_filtered <- data_numeric[, !names(data_numeric) %in% cols_to_exclude]
+
+# Calculem la matriu de correlació
+cor_matrix <- cor(data_numeric_filtered, use = "pairwise.complete.obs")
+
+# Visualitzem el mapa de correlacions amb rectangles colorejats en lloc de cercles
+corrplot(cor_matrix, 
+         method = "color",   # Utilitzem colors sòlids en lloc de cercles
+         type = "upper",     # Mostrar només la part superior de la matriu
+         order = "hclust",   # Ordenar variables per similitud de correlacions
+         tl.col = "black",   # Color del text de les etiquetes
+         tl.srt = 45,        # Rotació del text (45 graus)
+         addCoef.col = "black", # Color dels coeficients
+         number.cex = 0.7,   # Mida dels coeficients
+         tl.cex = 0.7,       # Mida de les etiquetes
+         col = colorRampPalette(c("#6D9EC1", "white", "#E46726"))(200),
+         title = "Mapa de correlacions entre les variables numèriques",
+         mar = c(0, 0, 1, 0)) # Marges del gràfic
+
+# Crear una visualització més detallada amb números
+par(mfrow = c(1, 1))  # Restablir la configuració del gràfic
+
 ```
