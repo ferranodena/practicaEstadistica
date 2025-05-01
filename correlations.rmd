@@ -215,3 +215,140 @@ if (any(!is.na(data$availability_365) & !is.na(data$review_scores_rating))) {
 plot(data$number_of_reviews, data$review_scores_rating)
 abline(lm(data$review_scores_rating ~ data$number_of_reviews))
 ```
+## Càlcul mitjanes tal
+```{r}
+# Càlcul del preu mitjà per nit
+preu_mitjà <- mean(data$price, na.rm = TRUE)
+cat("Preu mitjà per nit:", round(preu_mitjà, 2), "€\n\n")
+mediana_preu <- median(data$price, na.rm = TRUE)
+cat("Mediana del preu per nit:", round(mediana_preu, 2), "€\n\n")
+
+# Diferències de preus entre barris
+preus_per_barri <- aggregate(price ~ neighbourhood, data = data, FUN = mean)
+preus_per_barri <- preus_per_barri[order(preus_per_barri$price, decreasing = TRUE), ]
+cat("Preus mitjans per barri:\n")
+print(preus_per_barri)
+cat("\n")
+
+# Barri amb més llistats
+llistats_per_barri <- table(data$neighbourhood)
+llistats_per_barri <- sort(llistats_per_barri, decreasing = TRUE)
+cat("Nombre de llistats per barri:\n")
+print(llistats_per_barri)
+cat("\n")
+
+# Tipus de propietat més comú
+tipus_propietat <- table(data$property_type)
+tipus_propietat <- sort(tipus_propietat, decreasing = TRUE)
+cat("Nombre de llistats per tipus de propietat:\n")
+print(head(tipus_propietat, 10))  # Mostrem només els 10 primers
+cat("\n")
+
+# Tipus d'habitació més freqüent
+tipus_habitacio <- table(data$room_type)
+tipus_habitacio <- sort(tipus_habitacio, decreasing = TRUE)
+cat("Nombre de llistats per tipus d'habitació:\n")
+print(tipus_habitacio)
+cat("\n")
+
+# Nombre mitjà de ressenyes per llistat
+mitjana_ressenyes <- mean(data$number_of_reviews, na.rm = TRUE)
+mediana_ressenyes <- median(data$number_of_reviews, na.rm = TRUE)
+max_ressenyes <- max(data$number_of_reviews, na.rm = TRUE)
+cat("Nombre mitjà de ressenyes per llistat:", round(mitjana_ressenyes, 2), "\n")
+cat("Mediana de ressenyes per llistat:", mediana_ressenyes, "\n")
+cat("Màxim de ressenyes per llistat:", max_ressenyes, "\n\n")
+
+# Nombre mínim mitjà de nits
+mitjana_min_nits <- mean(data$minimum_nights, na.rm = TRUE)
+mediana_min_nits <- median(data$minimum_nights, na.rm = TRUE)
+cat("Nombre mínim mitjà de nits:", round(mitjana_min_nits, 2), "\n")
+cat("Mediana del nombre mínim de nits:", mediana_min_nits, "\n\n")
+
+# Disponibilitat
+disponibilitat_stats <- table(cut(data$availability_365, 
+                           breaks = c(-1, 100, 200, 300, 366), 
+                           labels = c("0-100 dies", "101-200 dies", "201-300 dies", "301-365 dies")))
+cat("Disponibilitat anual:\n")
+print(disponibilitat_stats)
+cat("Percentatge de disponibilitat per categories:\n")
+print(round(prop.table(disponibilitat_stats) * 100, 2))
+cat("\n")
+
+# Puntuació mitjana
+mitjana_puntuacio <- mean(data$review_scores_rating, na.rm = TRUE)
+mediana_puntuacio <- median(data$review_scores_rating, na.rm = TRUE)
+cat("Puntuació mitjana de les ressenyes:", round(mitjana_puntuacio, 2), "/100\n")
+cat("Mediana de les puntuacions:", mediana_puntuacio, "/100\n\n")
+
+listings_with_reviews <- sum(data$number_of_reviews > 0, na.rm = TRUE)
+percentage_with_reviews <- (listings_with_reviews / nrow(data)) * 100
+cat("Percentatge de llistings amb review:", round(percentage_with_reviews, 2), "%\n")
+
+# Resum general (taula estadística)
+cat("Resum estadístic general:\n")
+print(summary(data[, c("price", "minimum_nights", "availability_365", 
+                       "number_of_reviews", "review_scores_rating", 
+                       "accommodates", "amenities_count")]))
+
+```
+## Visualització gràfica de les dades
+
+```{r}
+# Gràfic de barres per a preus per barri
+barplot(preus_per_barri$price, 
+        names.arg = preus_per_barri$neighbourhood,
+        main = "Preu mitjà per barri",
+        xlab = "Barri",
+        ylab = "Preu mitjà (€)",
+        las = 2,
+        cex.names = 0.7,
+        col = "skyblue")
+```
+
+# Gràfic de barres per a llistats per barri
+```{r}
+barplot(llistats_per_barri[1:10], 
+        main = "Els 10 barris amb més llistats",
+        xlab = "Barri",
+        ylab = "Nombre de llistats",
+        las = 2,
+        cex.names = 0.7,
+        col = "lightgreen")
+```
+
+# Gràfic de pastís per a tipus d'habitació
+```{r}
+pie(tipus_habitacio, 
+    main = "Distribució per tipus d'habitació",
+    col = rainbow(length(tipus_habitacio)),
+    labels = paste(names(tipus_habitacio), " (", 
+                  round(prop.table(tipus_habitacio) * 100, 1), "%)", sep = ""))
+```
+
+# Histograma del mínim de nits
+```{r}
+hist(data$minimum_nights[data$minimum_nights <= 20], 
+     main = "Distribució del mínim de nits (<=20)", 
+     xlab = "Mínim de nits", 
+     col = "salmon", 
+     breaks = 20)
+```
+
+## Fes piechart del percentatge que tenen review i els que no
+```{r}
+# Comprovar si hi ha dades vàlides per review_scores_rating
+if (any(!is.na(data$review_scores_rating))) {
+  # Calcular el percentatge de propietats amb i sense puntuació
+  review_percent <- prop.table(table(!is.na(data$review_scores_rating))) * 100
+  
+  # Crear el piechart
+  pie(review_percent,
+      main = "Percentatge de propietats amb i sense puntuació",
+      col = rainbow(length(review_percent)),  # Colors de l'arc de l'arc de cada sector
+      cex = 0.8,  # Mida de les etiquetes
+      labels = paste(names(review_percent), " (", round(review_percent, 2), "%)", sep = ""))  # Etiquetes amb percentatge
+} else {
+  print("No hi ha dades vàlides per review_scores_rating.")
+}
+```
