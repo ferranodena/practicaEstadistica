@@ -385,5 +385,4 @@ corrplot(cor_matrix,
 
 # Crear una visualització més detallada amb números
 par(mfrow = c(1, 1))  # Restablir la configuració del gràfic
-
 ```
