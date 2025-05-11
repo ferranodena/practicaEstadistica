@@ -1,7 +1,7 @@
 ## Carregar el dataset
 
 ```{r}
-data <- read.csv(".\\base_dades_districtes_amb_professionalism.csv")
+data <- read.csv(".\\base_dades_districtes.csv")
 ```	
 
 ## Correlació entre les variables
@@ -364,6 +364,7 @@ library(corrplot)
 
 # Filtrem només les columnes numèriques (excloent les que hem creat pel càlcul del professionalism)
 cols_to_exclude <- c("availability_score", "listings_score", "response_time_score")
+cols_to_exclude <- cols_to_exclude[cols_to_exclude %in% names(data_numeric)]  # Ensure columns exist
 data_numeric_filtered <- data_numeric[, !names(data_numeric) %in% cols_to_exclude]
 
 # Calculem la matriu de correlació

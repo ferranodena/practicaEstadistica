@@ -1,14 +1,20 @@
 import pandas as pd
 import re
+from collections import Counter
+
+'''
+This script selects the variables we work on, fixes the neighbourhoods and district names,
+and computes the professionalism and the premium ammenities count variables.
+'''
 
 
 print("Iniciant el procés de neteja i transformació de dades...")
 
 # 1. Carregar el dataset
-df = pd.read_csv("..\\barcelona_listings.csv")
+df = pd.read_csv(".//barcelona_listings.csv")
 
 # 2. Reduir la mida del dataset (p.ex. agafant només el 25% de les files)
-df = df.sample(n= 19000, random_state=42)
+df = df.sample(n= 5000, random_state=42)
 print(f"Dataset reduït a {df.shape[0]} files (25% de l'original)")
 print(f"Dataset carregat amb {df.shape[0]} files i {df.shape[1]} columnes")
 
@@ -228,6 +234,32 @@ def assignar_districte(barri):
 df_reduit['neighbourhood'] = df_reduit['neighbourhood'].apply(assignar_districte)
 
 # 5. Neteja i transformacions bàsiques
+# 1. Extraiem totes les llistes d’amenities
+amen_lists = df['amenities'] \
+    .dropna() \
+    .apply(lambda s: [a.strip() for a in s.split(',')])
+
+# 2. Comptem la freqüència de cada amenity
+all_amenities = [amen for sub in amen_lists for amen in sub]
+freq = Counter(all_amenities)
+
+# 3. Definim el llindar del 10% del nombre total de llistings
+threshold = len(df) * 0.10
+
+# 4. Seleccionem les amenities “premium” (freq ≤ 10%)
+premium_amenities = {amen for amen, cnt in freq.items() if cnt <= threshold}
+
+# 5. Comptem per llistat quantes premium té
+def count_premium(row):
+    if pd.isna(row):
+        return 0
+    items = [a.strip() for a in row.split(',')]
+    return sum(1 for a in items if a in premium_amenities)
+
+# 5. Comptem per llistat quantes premium té i creem la nova columna
+df['amenities_premium_count'] = df['amenities'].apply(count_premium)
+
+
 # 5.1 Crear nova columna amb el nombre d'amenities
 print("Calculant el nombre d'amenities...")
 df_reduit["amenities_count"] = df["amenities"].apply(lambda x: len(re.findall(r'[^,{]+', str(x))) if pd.notna(x) else 0)
@@ -254,9 +286,59 @@ df_reduit["price"] = pd.to_numeric(df_reduit["price"])
 print("\nDistribució de les propietats per districte:")
 districtes_counts = df_reduit['neighbourhood'].value_counts()
 print(districtes_counts)
+# Funció per assignar valor a availability_365 segons els rangs especificats
+def availability_score(days):
+    if pd.isna(days) or days < 0:
+        return 0.0
+    elif days <= 50:
+        return 0.2
+    elif days <= 100:
+        return 0.4
+    elif days <= 200:
+        return 0.6
+    elif days <= 300:
+        return 0.8
+    else:
+        return 1.0
 
+# Funció per assignar valor a host_listings_count segons els rangs especificats
+def listings_score(count):
+    if pd.isna(count) or count < 1:
+        return 0.0
+    elif count == 1:
+        return 0.2
+    elif count <= 5:
+        return 0.4
+    elif count <= 10:
+        return 0.6
+    elif count <= 50:
+        return 0.8
+    else:
+        return 1.0
+
+# Diccionari per assignar valors a host_response_time
+response_time_values = {
+    'within an hour': 1.0,
+    'within a few hours': 0.75,
+    'within a day': 0.5,
+    'a few days or more': 0.25
+}
+
+# Aplicar les funcions per crear les variables de puntuació
+df['availability_score'] = df['availability_365'].apply(availability_score)
+df['listings_score'] = df['host_listings_count'].apply(listings_score)
+df['response_time_score'] = df['host_response_time'].map(response_time_values).fillna(0.0)
+
+# Calcular professionalism com una mitjana ponderada
+df['professionalism'] = (
+    0.5 * df['availability_score'] +
+    0.25 * df['listings_score'] +
+    0.25 * df['response_time_score']
+)
 
 # 7. Desar els resultats
+df_reduit['amenities_premium_count'] = df['amenities_premium_count']
+df_reduit['professionalism']            = df['professionalism']
 df_reduit.to_csv("base_dades_districtes.csv", index=False)
 print("Base de dades transformada i guardada com 'base_dades_districtes.csv'")
 
