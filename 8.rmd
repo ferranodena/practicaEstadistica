@@ -1,0 +1,6 @@
+## How does neighbourhood moderate the relationship between number of amenities and nightly price?
+
+```{r}	
+
+
+```
