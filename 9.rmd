@@ -1,0 +1,67 @@
+## Do hosts with many listings employ different pricing strategies (e.g. greater price dispersion) than those with few listings?
+```{r}
+dataset <- read.csv("./base_dades_districtes.csv")
+```
+
+```{r}
+# Carregar les dades
+dataset <- read.csv("./netejaDataset/base_dades_districtes.csv")
+
+# Categoritzar els hosts en tres grups simples
+dataset$host_category <- NA
+dataset$host_category[dataset$host_listings_count <= 2] <- "Small"
+dataset$host_category[dataset$host_listings_count > 2 & dataset$host_listings_count <= 10] <- "Medium"
+dataset$host_category[dataset$host_listings_count > 10] <- "Large"
+
+# Eliminar files amb categoria NA
+dataset <- dataset[!is.na(dataset$host_category),]
+
+# Resum bàsic per categoria
+resum <- tapply(dataset$price, dataset$host_category, function(x) {
+  c(mitjana = mean(x, na.rm = TRUE),
+    mediana = median(x, na.rm = TRUE),
+    desv_est = sd(x, na.rm = TRUE),
+    cv = sd(x, na.rm = TRUE) / mean(x, na.rm = TRUE) * 100)
+})
+
+# Mostrar el resum
+print("Estadístiques de preu per categoria d'amfitrió:")
+print(resum)
+
+# Gràfic simple de caixes per mostrar la distribució de preus
+boxplot(price ~ host_category, data = dataset, 
+        main = "Distribució de preus per categoria d'amfitrió",
+        xlab = "Categoria d'amfitrió", 
+        ylab = "Preu (€)",
+        col = c("lightblue", "lightgreen", "pink"))
+
+# Calcular preu mitjà per categoria i districte
+mitjanes_per_districte <- aggregate(
+  price ~ host_category + neighbourhood, 
+  data = dataset, 
+  FUN = mean
+)
+
+# Mostrar mitjana de preus per districte i categoria
+print("Preus mitjans per districte i categoria d'amfitrió:")
+print(head(mitjanes_per_districte, 15))
+
+# Gràfic simple de dispersió de preus per nombre de llistats
+plot(dataset$host_listings_count, dataset$price,
+     main = "Relació entre nombre de propietats i preu",
+     xlab = "Nombre de propietats", 
+     ylab = "Preu (€)",
+     col = "blue",
+     pch = 19)
+
+# Afegir línia de regressió
+model_regressio <- lm(price ~ host_listings_count, data = dataset)
+abline(model_regressio, col = "red", lwd = 2)
+
+# Afegir text amb el coeficient de correlació
+correlacio <- cor(dataset$host_listings_count, dataset$price, use = "complete.obs")
+text(x = max(dataset$host_listings_count, na.rm = TRUE) * 0.7, 
+     y = max(dataset$price, na.rm = TRUE) * 0.9,
+     labels = paste("Correlació:", round(correlacio, 3)),
+     col = "darkred")
+```
