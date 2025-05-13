@@ -82,3 +82,11 @@ ggplot(data, aes(x = neighbourhood, y = review_scores_rating, fill = availabilit
     legend.position = "right",
     plot.title = element_text(hjust = 0.5)  # Aquí centres el títol
 ```
+
+This R code reads and cleans a dataset about Airbnb listings. It removes missing values, fixes district names , and removes entries marked as “Unknown”. Next, it groups listings by how many days they are available per year (in 4 ranges). Finally, it creates a boxplot that shows the average guest rating for each district, with colors showing the availability group.
+
+In this graphic, we can see the same correlation as in the previous one. In this case, we have separated the data by neighbourhood to see if there are any differences between them.
+Most neighbourhoods follow a similar trend to the general graphic. However, we can see, for example, that in Les Corts there is a slightly different distribution: the 90–180 day interval has a noticeably lower rating. This could be due to a large number of Airbnbs being seasonal, with some possibly used as student residences during the academic year, which can result to a bad maintained apartement. A longer stay in a property may lead to noticing more flaws, which can result in lower reviews. This may be because the area is close to major universities, such as Campus Nord.
+We can also see that Nou Barris has a very unusual distribution. This may be caused by the low number of Airbnbs in the area, resulting in a more polarized dataset.
+Although there may be some minor differences between neighbourhoods, we can say that the general trend from the first graphic is quite accurate, especially because the neighbourhoods with a higher number of listings follow the same pattern.
+Therefore, the main conclusion we can draw is that greater availability tends to be associated with lower reviews—something that becomes even more evident when there is a lack of supervision or maintenance of the Airbnb.
