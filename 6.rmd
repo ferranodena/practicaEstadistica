@@ -1,0 +1,77 @@
+```{r}
+
+library(ggplot2)
+
+# 1. Carrega i neteja les dades
+
+data <- read.csv("base_dades_districtes.csv", stringsAsFactors = FALSE)
+
+# Elimina valors nuls
+data_clean <- data[!is.na(data$price) & !is.na(data$amenities_count), ]
+
+# Filtra per preus menors de 2000 €
+data_filtered <- data_clean[data_clean$price < 2000, ]
+
+# 2. Gràfic de dispersió + regressió
+
+ggplot(data_filtered, aes(x = amenities_count, y = price)) +
+  geom_point(color = "orange", alpha = 0.5, size = 2) +
+  geom_smooth(method = "lm", color = "red", se = TRUE, size = 1.2) +
+  labs(
+    title = "Relationship between amenities and price (up to 2000 €)",
+    x = "Number of amenities",
+    y = "Price (€)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+
+```{r}
+
+library(ggplot2)
+
+# 1. Carrega i neteja les dades
+
+data <- read.csv("base_dades_districtes.csv", stringsAsFactors = FALSE)
+
+# Elimina valors nuls
+data_clean <- data[!is.na(data$price) &
+                   !is.na(data$amenities_count) &
+                   !is.na(data$neighbourhood), ]
+
+# Posa els noms en majúscules
+capitalize_words <- function(x) {
+  sapply(strsplit(x, " "), function(y) {
+    paste(toupper(substring(y, 1,1)), substring(y, 2), sep="", collapse=" ")
+  })
+}
+data_clean$neighbourhood <- capitalize_words(data_clean$neighbourhood)
+
+# Elimina "Desconegut"
+data_clean <- data_clean[data_clean$neighbourhood != "Desconegut", ]
+
+# Filtra per preus < 2000 €
+data_filtered <- data_clean[data_clean$price < 2000, ]
+
+# 2. Gràfic: dispersió per districte
+
+ggplot(data_filtered, aes(x = amenities_count, y = price)) +
+  geom_point(color = "orange", alpha = 0.5, size = 1.5) +
+  geom_smooth(method = "lm", color = "red", se = FALSE, linewidth = 1) +
+  facet_wrap(~ neighbourhood) +
+  labs(
+    title = "Relació entre amenities i preu per districte (fins a 2000 €)",
+    x = "Nombre d'amenities",
+    y = "Preu (€)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(size = 9),
+    axis.text.x = element_text(size = 7)
+  )
+
+```
