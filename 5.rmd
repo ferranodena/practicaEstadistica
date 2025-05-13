@@ -23,7 +23,11 @@ ggplot(data_clean, aes(x = availability_365, y = review_scores_rating)) +
     plot.title = element_text(hjust = 0.5)
   )
 ```
+This R code uses the ggplot2 library to show the relationship between the number of days a listing is available per year and its average guest rating. First, it loads the data from a CSV file called base_dades_districtes.csv and removes any rows that have missing values in the columns availability_365 (annual availability) or review_scores_rating (guest rating). Then, it creates a scatter plot where each orange dot represents a listing. The dots are slightly transparent so it's easier to see where there are many points. A red line is added to show the overall trend between availability and rating.
 
+With this graphic, we can observe several interesting things. The first is that the majority of the reviews are very positive, which makes it harder to determine whether there is a real correlation. One possible explanation is that if the guest is satisfied, they are more likely to leave a good review, which could explain the high ratings.
+In terms of availability, we can see that it is fairly well distributed, with only a small dip in the middle range (150–250 days). The red line shows a visual representation of the correlation between the two variables. In this case, we see a downward trend. This means that higher availability of the Airbnb tends to be associated with lower reviews.
+There are several conclusions we can draw from this. One possible reason is that the more guests an Airbnb receives, the greater the need for cleaning. If the host does not follow a strict cleaning routine, this can negatively affect the guest’s experience. Poor reviews might not only result from cleanliness issues; furniture can also break more easily with frequent use. Damaged or worn-out furniture may also lead to negative reviews. Finally, a high number of guests may result in a more impersonal and distant relationship between the host and the guest, which could potentially cause some discomfort for the guest and may also be a reason for a lower review.
 
 ```{r}
 
