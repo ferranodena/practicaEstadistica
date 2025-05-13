@@ -1,0 +1,53 @@
+```r
+
+library(ggplot2)
+
+# 1. Carregar i netejar les dades
+
+data <- read.csv("base_dades_districtes.csv", stringsAsFactors = FALSE)
+
+# Elimina files amb NA a les columnes rellevants
+data <- data[!is.na(data$availability_365) &
+               !is.na(data$review_scores_rating) &
+               !is.na(data$neighbourhood), ]
+
+# Normalitza noms de districtes
+data$neighbourhood <- tolower(trimws(data$neighbourhood))
+data$neighbourhood[data$neighbourhood %in% c("nou barris", "noubarris", "nou_barris")] <- "nou barris"
+
+# Posa amb majúscules
+capitalize_words <- function(x) {
+  sapply(strsplit(x, " "), function(y) {
+    paste(toupper(substring(y, 1,1)), substring(y, 2), sep="", collapse=" ")
+  })
+}
+data$neighbourhood <- capitalize_words(data$neighbourhood)
+
+# Elimina el districte "Desconegut"
+data <- data[data$neighbourhood != "Desconegut", ]
+
+# 2. Crear trams de disponibilitat
+
+data$availability_group <- cut(
+  data$availability_365,
+  breaks = c(0, 90, 180, 270, 365),
+  labels = c("0-90 days", "91-180 days", "181-270 days", "271-365 days"),
+  include.lowest = TRUE
+)
+
+# 3. Crear el gràfic
+
+ggplot(data, aes(x = neighbourhood, y = review_scores_rating, fill = availability_group)) +
+  geom_boxplot(outlier.shape = 18, outlier.size = 2, alpha = 0.8) +
+  labs(
+    title = "Availability and guest rating by neighbourhood",
+    x = "Neighbourhood",
+    y = "Average review rating",
+    fill = "Availability"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right",
+    plot.title = element_text(hjust = 0.5)  # Aquí centres el títol
+```r
