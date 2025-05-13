@@ -1,4 +1,31 @@
 ```{r}
+library(ggplot2)
+
+# 1. Carrega i neteja les dades
+
+data <- read.csv("base_dades_districtes.csv", stringsAsFactors = FALSE)
+
+# Elimina files amb valors nuls
+data_clean <- data[!is.na(data$availability_365) & !is.na(data$review_scores_rating), ]
+
+# 2. Gràfic de dispersió 
+
+ggplot(data_clean, aes(x = availability_365, y = review_scores_rating)) +
+  geom_point(color = "orange", alpha = 0.5, size = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "red", size = 1.2) +
+  labs(
+    title = "Correlation between availability and guest rating",
+    x = "Anual availability",
+    y = "Average guest rating"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+
+```{r}
 
 library(ggplot2)
 
