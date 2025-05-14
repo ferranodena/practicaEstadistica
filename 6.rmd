@@ -28,6 +28,12 @@ ggplot(data_filtered, aes(x = amenities_count, y = price)) +
   )
 ```
 
+This R script creates a graphic to visualize the relationship between the number of amenities and the price of apartements. First, it loads data from a CSV file, removes rows with missing values, and filters out listings with prices above €2000 to avoid outliers. Then, it creates a scatter plot with a linear regression line, showing how price tends to increase with the number of amenities. 
+
+In this graphic, we can observe all the apartments represented by orange dots, showing the price of each apartment and the number of amenities it has. The first thing that stands out is a normal-like distribution in the graph. The most common range of amenities is between 5 and 50, and most apartments are priced under €500 per night.
+Beyond this obvious information, we can conclude that, in general, there isn’t a noticeable increase in average price as the number of amenities increases. Although the range of most apartments is quite large, we don’t see a significant difference in price between apartments with 5 amenities and those with 50. Therefore, we can say that aside from essential amenities (such as air conditioning, Wi-Fi, microwave, etc.), most guests don’t seem to perceive much added value in an apartment with many extras. This could explain the lack of a clear price increase in some cases.
+It’s important to note that, typically, more amenities suggest a better apartment—larger size, more bedrooms, more bathrooms, etc. This is reflected in the 50–75 amenities range, which includes fewer apartments but with noticeably higher prices. This helps explain why the regression line shows a slight upward trend.
+To conclude, we can say that amenities are not a primary concern for guests when choosing an Airbnb. As long as the essential ones are included, that seems to be enough—since, unlike buying an apartment, guests are only staying temporarily.
 
 ```{r}
 
@@ -75,3 +81,14 @@ ggplot(data_filtered, aes(x = amenities_count, y = price)) +
   )
 
 ```
+
+This R script creates a graphic to visualize the relationship between the number of amenities and the price of listings across different districts. First, it loads a CSV file, removes rows with missing values, and cleans the district names by standardizing and capitalizing them. Listings labeled as "Desconegut" (unknown) are excluded, and prices are filtered to only include those under €2000.
+The script then creates a scatter plot with a linear regression line for each district, allowing for comparison between districts. The goal is to show how amenities relate to price within each neighborhood.
+
+In this graphic, we see the same data as in the previous one, but separated by neighbourhoods. This allows us to understand the value of amenities in each specific area.
+There are some noticeable differences between neighbourhoods. Some have a higher average apartment price, purely due to their location. With this graphic, we can better understand the different profiles of guests across neighbourhoods.
+The first one that stands out is Nou Barris, mainly because of the extremely low number of Airbnbs, showing that it isn’t a very touristic area. We can also see that Eixample and Ciutat Vella have a large number of Airbnbs. These two neighbourhoods closely follow the trend seen in the overall graphic, likely because they have a greater influence on the data.
+Sant Andreu is quite similar to Nou Barris, with few Airbnbs, indicating it is also not very touristic, unlike Eixample and Ciutat Vella.
+A very interesting case is Sarrià. In this neighbourhood, amenities seem to have a greater impact on price. As we know, it is a wealthier part of Barcelona, so guests may be more willing to pay extra for certain amenities.
+Aside from these, the other neighbourhoods show a very similar distribution, closely following the general trend.
+To conclude, we can say that depending on the neighbourhood, prices may fluctuate with the number of amenities, mainly based on the type of guest each area attracts and how much they are willing to pay.
