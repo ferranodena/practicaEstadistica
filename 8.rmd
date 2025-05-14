@@ -4,56 +4,49 @@ dataset <- read.csv("./base_dades_districtes.csv")
 
 ## How does neighbourhood moderate the relationship between number of amenities and nightly price?
 ```{r}
-# Carreguem el conjunt de dades
-dataset <- read.csv("./base_dades_districtes.csv")
-
-# Assegura't que la variable neighbourhood és un factor si és categòrica
+# Make sure the neighbourhood variable is a factor if it is categorical
 dataset$neighbourhood <- as.factor(dataset$neighbourhood)
 
-# Ajustem el model amb interacció per veure com modera el barri la relació entre ammenities i price
+# Fit the model with interaction to see how the neighborhood moderates the relationship between amenities and price
 model <- lm(price ~ amenities_count * neighbourhood, data = dataset)
-
-# Mostrem el resum del model
+# Show the model summary
 summary(model)
-
-# Extreiem els coeficients del model
+# Extract the coefficients from the model
 coefs <- coef(model)
 
-# Obtenim els nivells del factor 'neighbourhood'
+# We obtain the levels of the factor 'neighbourhood'
 neighbourhoods <- levels(dataset$neighbourhood)
 
-# Inicialitzem un vector per guardar l'efecte de amenities_count per cada barri
+# Initialize a vector to store the effect of amenities_count for each neighborhood
 slope_effects <- numeric(length(neighbourhoods))
 
-# Per al barri de referència, l'efecte és només el coeficient principal
+# For the reference neighborhood, the effect is only the main coefficient
 slope_effects[1] <- coefs["amenities_count"]
 
-# Per a cada altre barri, sumem l'efecte principal i el coeficient d'interacció corresponent
+# For each other neighborhood, we sum the main effect and the corresponding interaction coefficient
 for(i in 2:length(neighbourhoods)) {
   interaction_name <- paste0("amenities_count:neighbourhood", neighbourhoods[i])
   slope_effects[i] <- coefs["amenities_count"] + coefs[interaction_name]
 }
 
-# Assignem noms al vector d'efectes
+# Assign names to the vector of effects
 names(slope_effects) <- neighbourhoods
 
-# Creem un gràfic de barres per visualitzar els efectes
+# Create a bar plot to visualize the effects
 barplot(slope_effects, 
-        main = "Efecte de amenities_count per barri", 
-        ylab = "Coeficient", 
-        xlab = "Barri", 
+        main = "Effect of amenities_count per neighbourhood", 
+        ylab = "Coefficient", 
+        xlab = "Neighbourhood", 
         col = "lightgreen", 
-        las = 2)  # girar etiquetes de l'eix x
+        las = 2)  # rotate x-axis labels
 
-# Afegim una línia horitzontal en zero per referència
+# Add a horizontal line at zero for reference
 abline(h = 0, lty = 2)
 ```
+Firstly, we build a linear regression model (lm) that includes an interaction between "amenities_count" and "neighbourhood". This is a key part: the interaction allows the model to figure out if the impact of amenities on the price changes depending on the neighborhood. For example, adding amenities might greatly increase the price in an upscale neighborhood, but have a smaller effect in a more working-class neighborhood.
 
-El primer que es fa és carregar un conjunt de dades en format CSV, que conté informació sobre diferents allotjaments, incloent-hi el preu per nit (price), el nombre de serveis (amenities_count) i el barri (neighbourhood). Un cop carregades les dades, s’assegura que la variable neighbourhood sigui tractada com un factor, és a dir, com una variable categòrica que representa els diferents barris disponibles a les dades.
+For the first neighborhood (called the reference neighborhood), which in our case is Ciutat Vella, the base effect is calculated by R. This is based on the effect of the number of amenities on the price, which is exactly the value of the main coefficient "amenities_count". However, for all other neighborhoods, we need to add this base coefficient to the interaction coefficient between amenities and the specific neighborhood. This calculation is done inside a loop, which constructs the exact name of the interaction variable and retrieves the corresponding value from the model.
 
-A continuació, es construeix un model de regressió lineal (lm) que inclou una interacció entre amenities_count i neighbourhood. Aquesta part és clau: la interacció permet al model detectar si l’impacte que tenen els serveis sobre el preu varia entre barris. Per exemple, pot ser que afegir serveis augmenti molt el preu en un barri de classe alta, però tingui un efecte més modest en un barri més popular.
+The resulting graph shows that, in Ciutat Vella, each amenity increases the price by 0.98 units. The other neighborhoods are compared to this increase in Ciutat Vella. The neighborhood where the difference is most noticeable is Gràcia. Gràcia used to be a working-class neighborhood, but it's now experiencing gentrification. This means it attracts a more local type of tourism, which might not require as many amenities as you would find in more luxurious neighborhoods of the city. The unique style of Gràcia is valued, which may attract a type of tourism that is equally expensive but less demanding in terms of the amenities offered. In contrast, in luxurious neighborhoods like Sarrià-Sant Gervasi and Les Corts, for a similar price to places like Gràcia or Ciutat Vella, a higher level of amenities is expected, which is not the case in more touristically well-located areas.
 
-Per al primer barri, (anomenat barri de referència), que en el nostre cas és Ciutat Vella. L'efecte base el calcula R a partir de l’efecte del nombre de serveis sobre el preu, que és exactament igual al valor del coeficient principal amenities_count. En canvi, per a la resta de barris, cal sumar aquest coeficient base amb el coeficient d’interacció entre serveis i el barri concret. Aquest càlcul es fa dins un bucle, que construeix el nom exacte de la variable d’interacció i en recupera el valor corresponent del model.
-
-El gràfic resultant s'intepreta com a, que, a Ciutat Vella, cada amenity augmenta el preu en 0.98 unitats. La resta es comparen l'augment de Ciutat Vella. El barri on destaca més la diferència és Gràcia, barri obrer de tota la vida però actualment amb una forta gentrificació que provoca que, es busqui un tipus de turisme més local, que pot ser que no ofereixi serveis tan forts com podriem tenir en barris més luxosos de la ciutat.Es valora l'estil diferent destacat de Gràcia, que, pot atraure un tipus de turisme, igualment car, però menys exigent amb els serveis oferts, que contrariament passaria als barris luxosos, que potser no es valora tant l'estil de vida de la zona i es valora més la comoditat que t'ofereix l'AirBnb. Aquests barris luxosos serien sobretot Sarrià-Sant Gervasi i Les Corts, on, per un preu similar de llocs com Gràcia o Ciutat Vella, s'exigeix uns serveis que altres llocs, millor situats turísticament parlant, no s'exigeixen.
-La resta de barris tenen un equilibri similar al de Ciutat Vella, cosa que ens indica que es valora els serveis oferts en funció del nivell econòmic de la zona, perquè l'exigència en barris com Nou Barris o Sants-Montjuic, que són zones residencials i tradicionalment obrers, que les exigències de Ciutat Vella o Sant Martí, però aquesta diferència es pot veure compensada pel preu.
+The remaining neighborhoods have a similar balance to Ciutat Vella. This indicates that the amenities offered are valued based on the economic level of the area. The demands in neighborhoods like Nou Barris or Sants-Montjuïc, which are residential and traditionally working-class areas, are different from those in Ciutat Vella or Sant Martí. However, this difference may be offset by the price.
