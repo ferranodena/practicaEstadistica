@@ -1,0 +1,47 @@
+```{r}
+# First plot without number_of_reviews
+ggplot(data, aes(x = price, y = review_scores_rating)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", color = "red") +
+    labs(title = "Relationship between Price and Rating",
+         x = "Price",
+         y = "Rating") +
+    theme_minimal()
+
+# Correlation matrix with just price and rating
+cor_matrix <- cor(data[c("price", "review_scores_rating")])
+print(round(cor_matrix, 3))
+```
+
+```{r}
+# Histograma del preu
+ggplot(data, aes(x = price)) +
+  geom_histogram(fill = "skyblue", color = "black", bins = 30) +
+  labs(title = "Distribució dels preus", x = "Preu", y = "Nombre d'allotjaments") +
+  theme_minimal()
+
+# Boxplot del preu per barri/districte
+ggplot(data, aes(x = neighbourhood, y = price)) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(title = "Preu per districte", x = "Districte", y = "Preu") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Gràfic de dispersió: nombre de reviews vs preu
+ggplot(data, aes(x = number_of_reviews, y = price)) +
+  geom_point(alpha = 0.5, color = "purple") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Relació entre nombre de reviews i preu",
+       x = "Nombre de reviews",
+       y = "Preu") +
+  theme_minimal()
+
+# Barplot del nombre d'allotjaments per tipus de propietat
+ggplot(data, aes(x = property_type)) +
+  geom_bar(fill = "orange") +
+  labs(title = "Nombre d'allotjaments per tipus de propietat",
+       x = "Tipus de propietat",
+       y = "Nombre d'allotjaments") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
