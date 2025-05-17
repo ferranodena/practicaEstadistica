@@ -22,10 +22,10 @@ data <- read.csv("base_dades_districtes.csv")
 ggplot(data, aes(x = price, y = number_of_reviews, color = review_scores_rating)) +
   geom_point(alpha = 0.7, size = 2) +
   scale_color_gradient(low = "yellow", high = "blue") +
-  labs(title = "Preu vs Nombre de reviews (color: puntuació)",
-       x = "Preu",
-       y = "Nombre de reviews",
-       color = "Puntuació") +
+  labs(title = "Price vs Number of reviews (color: rating)",
+       x = "Price",
+       y = "Number of reviews",
+       color = "Rating") +
   theme_minimal()
 ```
 
@@ -36,9 +36,9 @@ data <- read.csv("base_dades_districtes.csv")
 ggplot(data, aes(x = number_of_reviews, y = review_scores_rating)) +
   geom_point(alpha = 0.6, color = "darkgreen", size = 2) +
   geom_smooth(method = "lm", color = "red") +
-  labs(title = "Nombre de reviews vs Puntuació mitjana",
-       x = "Nombre de reviews",
-       y = "Puntuació mitjana") +
+  labs(title = "Number of reviews vs Average rating",
+       x = "Number of reviews",
+       y = "Average rating") +
   theme_minimal()
 ```
 
