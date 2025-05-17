@@ -1,0 +1,103 @@
+```{r}
+real_estate <- read.csv("base_dades_districtes.csv")
+# Scatter plot to study the correlation between square_feet and price (excluding 0 values)
+library(ggplot2)
+
+# Remove rows with missing or zero values in square_feet or price
+filtered_data <- real_estate[!is.na(real_estate$square_feet) &
+                             !is.na(real_estate$price) &
+                             real_estate$square_feet > 0, ]
+
+ggplot(filtered_data, aes(x = square_feet, y = price)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", se = TRUE, color = "red", linewidth = 1.2) +
+  labs(
+    title = "Correlation between Square Feet and Price",
+    x = "Square Feet",
+    y = "Price ($)"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# Barplot to compare average price by neighbourhood
+library(ggplot2)
+
+# Remove rows with missing values in price or neighbourhood
+filtered_data <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$neighbourhood), ]
+
+# Calculate median price for labels
+median_prices <- aggregate(price ~ neighbourhood, filtered_data, median)
+
+ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = price/1000)) +
+  geom_boxplot(fill = "skyblue", alpha = 0.7) +
+  labs(
+    title = "House Price Distribution by Neighbourhood",
+    subtitle = "Boxplots showing price spread in each area",
+    x = "Neighbourhood",
+    y = "Price (Thousands $)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title = element_text(size = 12)
+  )
+
+```
+
+```{r}
+# Scatter plot: Price vs Amenities Count
+real_estate <- read.csv("base_dades_districtes.csv")
+filtered_data1 <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$amenities_count), ]
+
+ggplot(filtered_data1, aes(x = amenities_count, y = price)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Price vs Amenities Count",
+    x = "Amenities Count",
+    y = "Price ($)"
+  ) +
+  theme_minimal()
+
+# Scatter plot: Price vs Premium Amenities Count
+filtered_data2 <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$amenities_premium_count), ]
+
+ggplot(filtered_data2, aes(x = amenities_premium_count, y = price)) +
+  geom_point(alpha = 0.6, color = "darkgreen") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Price vs Premium Amenities Count",
+    x = "Premium Amenities Count",
+    y = "Price ($)"
+  ) +
+  theme_minimal()
+
+# Correlation calculation
+cor1 <- cor(filtered_data1$price, filtered_data1$amenities_count)
+cor2 <- cor(filtered_data2$price, filtered_data2$amenities_premium_count)
+print(paste("Correlation between price and amenities count:", round(cor1, 2)))
+print(paste("Correlation between price and premium amenities count:", round(cor2, 2)))
+```
+
+```{r}
+# Scatter plot: Price vs Square Feet
+real_estate <- read.csv("base_dades_districtes.csv")
+filtered_data_sqft <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$square_feet) & real_estate$square_feet > 0, ]
+
+ggplot(filtered_data_sqft, aes(x = square_feet, y = price)) +
+  geom_point(alpha = 0.6, color = "purple") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Price vs Square Feet",
+    x = "Square Feet",
+    y = "Price ($)"
+  ) +
+  theme_minimal()
+
+# Correlation calculation
+cor_sqft <- cor(filtered_data_sqft$price, filtered_data_sqft$square_feet)
+print(paste("Correlation between price and square feet:", round(cor_sqft, 2)))
+```
