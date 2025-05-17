@@ -1,52 +1,128 @@
+## Do hosts with many listings employ different pricing strategies (e.g. greater price dispersion) than those with few listings?
 ```{r}
-dataset <- read.csv("./base_dades_districtes.csv")
+data <- read.csv("./base_dades_districtes.csv")
 ```
 
-## How does neighbourhood moderate the relationship between number of amenities and nightly price?
 ```{r}
-# Make sure the neighbourhood variable is a factor if it is categorical
-dataset$neighbourhood <- as.factor(dataset$neighbourhood)
+# Step 1: Classify hosts based on listings count (lowest 25% vs middle 50% vs highest 25%)
+lower_q <- quantile(data$host_listings_count, 0.25, na.rm = TRUE)
+upper_q <- quantile(data$host_listings_count, 0.75, na.rm = TRUE)
 
-# Fit the model with interaction to see how the neighborhood moderates the relationship between amenities and price
-model <- lm(price ~ amenities_count * neighbourhood, data = dataset)
-# Show the model summary
-summary(model)
-# Extract the coefficients from the model
-coefs <- coef(model)
+# Create the classification
+data$host_category <- ifelse(data$host_listings_count <= lower_q, "Low", 
+                      ifelse(data$host_listings_count >= upper_q, "High", "Medium"))
 
-# We obtain the levels of the factor 'neighbourhood'
-neighbourhoods <- levels(dataset$neighbourhood)
-
-# Initialize a vector to store the effect of amenities_count for each neighborhood
-slope_effects <- numeric(length(neighbourhoods))
-
-# For the reference neighborhood, the effect is only the main coefficient
-slope_effects[1] <- coefs["amenities_count"]
-
-# For each other neighborhood, we sum the main effect and the corresponding interaction coefficient
-for(i in 2:length(neighbourhoods)) {
-  interaction_name <- paste0("amenities_count:neighbourhood", neighbourhoods[i])
-  slope_effects[i] <- coefs["amenities_count"] + coefs[interaction_name]
+# Step 2: Calculate price dispersion metrics by category
+# Function to calculate statistics by group
+calculate_stats <- function(group) {
+  prices <- data$price[data$host_category == group]
+  mean_val <- mean(prices, na.rm = TRUE)
+  median_val <- median(prices, na.rm = TRUE)
+  std_dev <- sd(prices, na.rm = TRUE)
+  coef_var <- (std_dev / mean_val) * 100
+  iqr_val <- IQR(prices, na.rm = TRUE)
+  min_val <- min(prices, na.rm = TRUE)
+  max_val <- max(prices, na.rm = TRUE)
+  range_val <- max_val - min_val
+  count_val <- length(prices)
+  
+  return(c(mean_val, median_val, std_dev, coef_var, iqr_val, min_val, max_val, range_val, count_val))
 }
 
-# Assign names to the vector of effects
-names(slope_effects) <- neighbourhoods
+# Calculate statistics for each group
+stats_low <- calculate_stats("Low")
+stats_medium <- calculate_stats("Medium")
+stats_high <- calculate_stats("High")
 
-# Create a bar plot to visualize the effects
-barplot(slope_effects, 
-        main = "Effect of amenities_count per neighbourhood", 
-        ylab = "Coefficient", 
-        xlab = "Neighbourhood", 
-        col = "lightgreen", 
-        las = 2)  # rotate x-axis labels
+# Create results data frame
+price_dispersion <- data.frame(
+  host_category = c("Low", "Medium", "High"),
+  mean_price = c(stats_low[1], stats_medium[1], stats_high[1]),
+  median_price = c(stats_low[2], stats_medium[2], stats_high[2]),
+  sd_price = c(stats_low[3], stats_medium[3], stats_high[3]),
+  cv_price = c(stats_low[4], stats_medium[4], stats_high[4]),
+  iqr_price = c(stats_low[5], stats_medium[5], stats_high[5]),
+  min_price = c(stats_low[6], stats_medium[6], stats_high[6]),
+  max_price = c(stats_low[7], stats_medium[7], stats_high[7]),
+  price_range = c(stats_low[8], stats_medium[8], stats_high[8]),
+  count = c(stats_low[9], stats_medium[9], stats_high[9])
+)
 
-# Add a horizontal line at zero for reference
-abline(h = 0, lty = 2)
+# Display the summary
+print(price_dispersion)
+
+# Step 3: Create visualizations using basic R functions
+
+# 1) Boxplot to compare price distribution
+boxplot(price ~ host_category, data = data,
+        main = "Price Distribution by Host Category",
+        xlab = "Host Category", ylab = "Price",
+        col = c("skyblue", "lightgreen", "coral"),
+        ylim = c(0, quantile(data$price, 0.95, na.rm = TRUE)),
+        las = 1)
+
+# 3) Bar chart of coefficient of variation
+barplot(price_dispersion$cv_price, 
+        names.arg = price_dispersion$host_category,
+        main = "Coefficient of Variation by Category",
+        xlab = "Host Category", ylab = "CV (%)",
+        col = c("skyblue", "lightgreen", "coral"))
+
 ```
-Firstly, we build a linear regression model (lm) that includes an interaction between "amenities_count" and "neighbourhood". This is a key part: the interaction allows the model to figure out if the impact of amenities on the price changes depending on the neighborhood. For example, adding amenities might greatly increase the price in an upscale neighborhood, but have a smaller effect in a more working-class neighborhood.
+This R code performs a comprehensive analysis of pricing strategies among Airbnb hosts, segmented by the number of properties they manage. The analysis follows a structured methodology to determine whether hosts with different portfolio sizes employ different pricing approaches.
 
-For the first neighborhood (called the reference neighborhood), which in our case is Ciutat Vella, the base effect is calculated by R. This is based on the effect of the number of amenities on the price, which is exactly the value of the main coefficient "amenities_count". However, for all other neighborhoods, we need to add this base coefficient to the interaction coefficient between amenities and the specific neighborhood. This calculation is done inside a loop, which constructs the exact name of the interaction variable and retrieves the corresponding value from the model.
 
-The resulting graph shows that, in Ciutat Vella, each amenity increases the price by 0.98 units. The other neighborhoods are compared to this increase in Ciutat Vella. The neighborhood where the difference is most noticeable is Gràcia. Gràcia used to be a working-class neighborhood, but it's now experiencing gentrification. This means it attracts a more local type of tourism, which might not require as many amenities as you would find in more luxurious neighborhoods of the city. The unique style of Gràcia is valued, which may attract a type of tourism that is equally expensive but less demanding in terms of the amenities offered. In contrast, in luxurious neighborhoods like Sarrià-Sant Gervasi and Les Corts, for a similar price to places like Gràcia or Ciutat Vella, a higher level of amenities is expected, which is not the case in more touristically well-located areas.
+The code begins by dividing hosts into three distinct categories based on their listing count:
 
-The remaining neighborhoods have a similar balance to Ciutat Vella. This indicates that the amenities offered are valued based on the economic level of the area. The demands in neighborhoods like Nou Barris or Sants-Montjuïc, which are residential and traditionally working-class areas, are different from those in Ciutat Vella or Sant Martí. However, this difference may be offset by the price.
+- Low: Hosts in the bottom 25% by number of listings (casual hosts)
+- Medium: Hosts in the middle 50% (moderately active hosts)
+- High: Hosts in the top 25% (professional hosts with many listings)
+
+This categorization uses quartiles as thresholds, creating a reasonable distribution that allows for meaningful comparisons between groups.
+
+For each host category, the code calculates a comprehensive set of statistical measures to characterize pricing behavior:
+
+- Central tendency metrics: Mean and median prices show the typical price point for each host category
+- Dispersion metrics: Standard deviation and interquartile range (IQR) measure absolute price variability
+- Relative dispersion: Coefficient of variation (CV) - calculated as (standard deviation/mean × 100) - measures price variability relative to the average price
+- Range metrics: Minimum price, maximum price, and overall price range (max-min) show the boundaries of pricing strategies
+- Sample size: Count of listings in each category ensures statistical validity
+- The statistics are calculated using a custom function that processes each host category separately, ensuring clean and consistent measurement across groups.
+
+
+
+The results obtained are:
+
+| host_category | mean_price | median_price | sd_price | cv_price | iqr_price | min_price | max_price | price_range | count |
+|---------------|------------|--------------|----------|----------|-----------|-----------|-----------|-------------|-------|
+| Low           | 71.96      | 50.0         | 84.33    | 117.20   | 45        | 8         | 2000      | 1992        | 1595  |
+| Medium        | 106.37     | 57.5         | 335.65   | 315.55   | 65        | 8         | 8000      | 7992        | 2163  |
+| High          | 221.93     | 100.0        | 653.08   | 294.28   | 92        | 9         | 6000      | 5991        | 1260  |
+
+These results strongly suggest that hosts with many listings do employ different pricing strategies with greater price dispersion than those with few listings.
+
+The first thing that we can easily see is that there's a strong upward trend in both mean and median prices as we move from hosts with few listings to those with many listings. Hosts who fall within the higher quartile charge significantly higher. This can be explained due to the rising tendency of major holder of tourist accommodations in the city, who live exclusively from the tourist renting. They need to have higher prices to sustain its deal. This is causing rising prices for the locals, which are increasingly getting expelled from their neighbourhoods.
+
+We can also observe a big difference in the dispersion of the prices of the listings, which at first sight might be counter-intuitive, because if they are normally sparsed throughout the city, the prices should be also normally distributed, which is not the case. We will focus on the Coefficient of Variation (CV), which is a statistical measure that describes the dispersion of data points around the mean, relative to the mean itself. For the low-owning hosts, this is 117% which means that the low-listing hosts often adopt straightforward pricing strategies. Having only one or two properties means they're less likely to experiment with diverse price points and more likely to choose a “safe” middle-ground price based on limited market research or platform suggestions. Hosts with few listings regularly prioritize consistency and predictability over maximum revenue optimization. They may set prices and rarely adjust them, while hosts with many listings actively manage and diversify their pricing. It also can be explained by their low operating scale, which without the economies of scale in operations, low-listing hosts typically have similar cost structures across their limited properties, resulting in comparable pricing requirements to achieve profitability.
+
+The mid-listing hosts have an extremely high coefficient of variation: 315%, which is even higher than the high-listing hosts, being at 294%. This makes sense when we think about the personal situation of a mid-listing host. Medium hosts are often in a transitional phase between casual and professional hosting. This middle stage typically involves active experimentation, which causes a higher range of prices, target demographics and seasonal changes. This phase should be got over with for the high-listing hosts, which given the experience, they are in a more standardized phase with more market domain and better predictability, that provoke a relatively-lower price range caused by some expenses being cut off which reflect in the final price. 
+
+This different boundaries also reflect when we see the price range difference, being higher in the mid-owning hosts, explained by this experimental phase we've already talked about. We could now try to compare the proportion of different types of listing between the high range owners and the mid-ones:
+```{r}
+
+room_type_by_category <- table(data$host_category, data$room_type)
+room_type_prop <- prop.table(room_type_by_category, 1) * 100  # Percentage by row
+
+print("Distribution of the listings categories by host type(%):")
+print(round(room_type_prop, 2))
+
+# Create stacked barplot from the room type proportions
+barplot(t(room_type_prop), 
+        main = "Accommodation Types by Host Category (%)",
+        xlab = "Host Category", 
+        ylab = "Percentage (%)",
+        col = c("steelblue", "coral", "lightgreen"),
+        legend.text = colnames(room_type_prop),
+        args.legend = list(x = "topright", cex = 0.8))  
+```
+These results confirm our theory, where we can see that mid-listing hosts tend to have a much more distributed portfolio than low-listing hosts, which are more focused on private room hosting. The high-listing hosts are more focused on entire apartment hosting. The mid-listing hosts fall in the middle, which corroborates this experimenting phase.

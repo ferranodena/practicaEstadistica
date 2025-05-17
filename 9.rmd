@@ -1,110 +1,101 @@
-## Do hosts with many listings employ different pricing strategies (e.g. greater price dispersion) than those with few listings?
+##  Do hosts with fast response times capture more last-minute bookings (low minimum_nights & low availability) and thereby higher average occupancy/review rates?
+
 ```{r}
 dataset <- read.csv("./base_dades_districtes.csv")
 ```
 
 ```{r}
-# Step 1: Classify hosts based on listings count (lowest 25% vs middle 50% vs highest 25%)
-lower_q <- quantile(data$host_listings_count, 0.25, na.rm = TRUE)
-upper_q <- quantile(data$host_listings_count, 0.75, na.rm = TRUE)
+# Step 1: Classify response times as fast or slow
+# Fast response is defined as "within an hour" OR "within a few hours"
+dataset$response_speed <- ifelse(dataset$host_response_time %in% c("within an hour","within a few hours"), 
+                                "Fast", 
+                                ifelse(dataset$host_response_time == "N/A", 
+                                       NA, "Slow"))
 
-# Create the classification
-data$host_category <- ifelse(data$host_listings_count <= lower_q, "Low", 
-                      ifelse(data$host_listings_count >= upper_q, "High", "Medium"))
+# Step 2: Define last-minute friendly listings (low minimum nights & low availability), medians are the threshold
+min_nights_threshold <- median(dataset$minimum_nights, na.rm = TRUE)
+availability_threshold <- median(dataset$availability_365, na.rm = TRUE)
 
-# Step 2: Calculate price dispersion metrics by category
-# Function to calculate statistics by group
-calculate_stats <- function(group) {
-  prices <- data$price[data$host_category == group]
-  mean_val <- mean(prices, na.rm = TRUE)
-  median_val <- median(prices, na.rm = TRUE)
-  std_dev <- sd(prices, na.rm = TRUE)
-  coef_var <- (std_dev / mean_val) * 100
-  iqr_val <- IQR(prices, na.rm = TRUE)
-  min_val <- min(prices, na.rm = TRUE)
-  max_val <- max(prices, na.rm = TRUE)
-  range_val <- max_val - min_val
-  count_val <- length(prices)
-  
-  return(c(mean_val, median_val, std_dev, coef_var, iqr_val, min_val, max_val, range_val, count_val))
-}
+dataset$last_minute_friendly <- ifelse(dataset$minimum_nights <= min_nights_threshold & 
+                                      dataset$availability_365 <= availability_threshold,
+                                     "Last-minute friendly", "Regular")
 
-# Calculate statistics for each group
-stats_low <- calculate_stats("Low")
-stats_medium <- calculate_stats("Medium")
-stats_high <- calculate_stats("High")
+# Step 3: Create contingency table to see relationship between response time and last-minute friendliness
+# Remove NA values for clean analysis
+response_data <- dataset[!is.na(dataset$response_speed), ]
+response_lastminute_table <- table(response_data$response_speed, response_data$last_minute_friendly)
+response_lastminute_prop <- prop.table(response_lastminute_table, 1) * 100  # Row percentages
 
-# Create results data frame
-price_dispersion <- data.frame(
-  host_category = c("Low", "Medium", "High"),
-  mean_price = c(stats_low[1], stats_medium[1], stats_high[1]),
-  median_price = c(stats_low[2], stats_medium[2], stats_high[2]),
-  sd_price = c(stats_low[3], stats_medium[3], stats_high[3]),
-  cv_price = c(stats_low[4], stats_medium[4], stats_high[4]),
-  iqr_price = c(stats_low[5], stats_medium[5], stats_high[5]),
-  min_price = c(stats_low[6], stats_medium[6], stats_high[6]),
-  max_price = c(stats_low[7], stats_medium[7], stats_high[7]),
-  price_range = c(stats_low[8], stats_medium[8], stats_high[8]),
-  count = c(stats_low[9], stats_medium[9], stats_high[9])
-)
+# Display results
+print("Percentage of last-minute friendly listings by response time:")
+print(round(response_lastminute_prop, 2))
 
-# Display the summary
-print(price_dispersion)
+# Step 4: Calculate occupancy and rating statistics by group
+# Using number_of_reviews as a proxy for occupancy (more reviews = higher occupancy)
+occupancy_by_response <- tapply(response_data$number_of_reviews, response_data$response_speed, 
+                               function(x) c(mean = mean(x, na.rm = TRUE),
+                                           median = median(x, na.rm = TRUE)))
 
-# Step 3: Create visualizations using basic R functions
+ratings_by_response <- tapply(response_data$review_scores_rating, response_data$response_speed, 
+                             function(x) c(mean = mean(x, na.rm = TRUE),
+                                          median = median(x, na.rm = TRUE)))
 
-# 1) Boxplot to compare price distribution
-boxplot(price ~ host_category, data = data,
-        main = "Price Distribution by Host Category",
-        xlab = "Host Category", ylab = "Price",
-        col = c("skyblue", "lightgreen", "coral"),
-        ylim = c(0, quantile(data$price, 0.95, na.rm = TRUE)),
-        las = 1)
+print("Occupancy statistics (number of reviews) by response time:")
+print(occupancy_by_response)
 
-# 3) Bar chart of coefficient of variation
-barplot(price_dispersion$cv_price, 
-        names.arg = price_dispersion$host_category,
-        main = "Coefficient of Variation by Category",
-        xlab = "Host Category", ylab = "CV (%)",
-        col = c("skyblue", "lightgreen", "coral"))
+print("Rating statistics by response time:")
+print(ratings_by_response)
 
+# Step 5: Visualization with simple plots
+# Bar chart showing proportion of last-minute friendly listings
+barplot(response_lastminute_prop[, "Last-minute friendly"], 
+        main = "% of Last-minute Friendly Listings by Response Time",
+        xlab = "Host Response Time", 
+        ylab = "Percentage (%)",
+        col = c("coral", "steelblue"),
+        names.arg = c("Fast", "Slow"))
+
+# Box plots comparing reviews and ratings
+par(mfrow = c(1, 2))
+boxplot(number_of_reviews ~ response_speed, data = response_data,
+        main = "Number of Reviews by Response Time",
+        xlab = "Host Response Time",
+        ylab = "Number of Reviews",
+        col = c("coral", "steelblue"))
+
+boxplot(review_scores_rating ~ response_speed, data = response_data,
+        main = "Ratings by Response Time",
+        xlab = "Host Response Time",
+        ylab = "Rating Score",
+        col = c("coral", "steelblue"))
+par(mfrow = c(1, 1))
 ```
-This R code performs a comprehensive analysis of pricing strategies among Airbnb hosts, segmented by the number of properties they manage. The analysis follows a structured methodology to determine whether hosts with different portfolio sizes employ different pricing approaches.
+This code defines as fast responders those who have response times of either "within an hour" or "within a few hours". By having definition of fast and slow responders, we can analyze if there's a meaningful threshold effect between hosts who respond promptly (within hours) versus those who take longer (days or more). Then we define the last-minute friendly listings, which will be those who have two key characteristics:
 
+1.  fewer than the median number of minimum nights - indicating flexibility for short stays
+2. Show less than median availability throughout the year - suggesting they're already successful at securing bookings
 
-The code begins by dividing hosts into three distinct categories based on their listing count:
+This definition of "last-minute friendly" captures properties that are structurally more accommodating to spontaneous travelers who might be looking for quick, short-term arrangements. The last-minute friendly listings will be those who are under both thershold.
 
-- Low: Hosts in the bottom 25% by number of listings (casual hosts)
-- Medium: Hosts in the middle 50% (moderately active hosts)
-- High: Hosts in the top 25% (professional hosts with many listings)
+After creating these two groups, we check if hosts who respond quickly have more listings that are good for last-minute bookings. We also look at two important things:
 
-This categorization uses quartiles as thresholds, creating a reasonable distribution that allows for meaningful comparisons between groups.
+- Do fast-responding hosts get more bookings? (We count reviews to estimate this)
+- Do guests like staying with fast responders better? (We look at their rating scores)
 
-For each host category, the code calculates a comprehensive set of statistical measures to characterize pricing behavior:
+This helps us understand if being quick to answer messages helps hosts get more last-minute bookings and happier guests.
 
-- Central tendency metrics: Mean and median prices show the typical price point for each host category
-- Dispersion metrics: Standard deviation and interquartile range (IQR) measure absolute price variability
-- Relative dispersion: Coefficient of variation (CV) - calculated as (standard deviation/mean × 100) - measures price variability relative to the average price
-- Range metrics: Minimum price, maximum price, and overall price range (max-min) show the boundaries of pricing strategies
-- Sample size: Count of listings in each category ensures statistical validity
-- The statistics are calculated using a custom function that processes each host category separately, ensuring clean and consistent measurement across groups.
+At first, we'd determined that the fast responders would be those who answer within an hour, whom results were:
 
+       Last-minute friendly Regular
+  Fast                29.78   70.22
+  Slow                28.60   71.40
 
+As we can see, there's is not much difference between the fast and slow answering hosts, suggesting that responding speed doesn't influence how much last-minute friendly is a listing. So we decided to take a less radical position and accept the within a few hours hosts as fast responders to see if anything changes. The new results were:
 
-The results obtained are:
+       Last-minute friendly Regular
+  Fast                27.13   72.87
+  Slow                35.42   64.58
+  
+These results now suggest that there is actually an inverse relationship - slower responders appear to have a higher percentage of last-minute friendly listings (35.42% vs 27.13%). This is counter-intuitive and might indicate that response time alone isn't the determining factor for last-minute bookings. Perhaps hosts who take longer to respond have other attractive features or competitive pricing that make their properties appealing despite the slower response.
 
-| host_category | mean_price | median_price | sd_price | cv_price | iqr_price | min_price | max_price | price_range | count |
-|---------------|------------|--------------|----------|----------|-----------|-----------|-----------|-------------|-------|
-| Low           | 71.96      | 50.0         | 84.33    | 117.20   | 45        | 8         | 2000      | 1992        | 1595  |
-| Medium        | 106.37     | 57.5         | 335.65   | 315.55   | 65        | 8         | 8000      | 7992        | 2163  |
-| High          | 221.93     | 100.0        | 653.08   | 294.28   | 92        | 9         | 6000      | 5991        | 1260  |
-
-These results strongly suggest that hosts with many listings do employ different pricing strategies with greater price dispersion than those with few listings.
-
-The first thing that we can easily see is that there's a strong upward trend in both mean and median prices as we move from hosts with few listings to those with many listings. Hosts who fall within the higher quartile charge significantly higher. This can be explained due to the rising tendency of major holder of tourist accommodations in the city, who live exclusively from the tourist renting. They need to have higher prices to substain its deal. This is causing rising prices for the locals, which are increasingly getting expelled from their neighbourhoods.
-
-We can also observe a big difference in the dispersion of the prices of the listings, which at first sight might be counter-intuitive, because if they are normally sparsed throughout the city, the prices should be also normally distributed, which is not the case. We will focus on the Coefficient of Variation (CV), which is a statistical measure that describes the dispersion of data points around the mean, relative to the mean itself. For the low-owning hosts, this is 117% which means that the low-listing hosts often adopt straightforward pricing strategies. Having only one or two properties means they're less likely to experiment with diverse price points and more likely to choose a "safe" middle-ground price based on limited market research or platform suggestions. Hosts with few listings often prioritize consistency and predictability over maximum revenue optimization. They may set prices and rarely adjust them, while hosts with many listings actively manage and diversify their pricing. It also can be explained by their low operating scale, which without the economies of scale in operations, low-listing hosts often have similar cost structures across their limited properties, resulting in comparable pricing requirements to achieve profitability.
-
-The mid-listing hosts have a extremely high coefficient of variation: 315%, which is even higher that the high-listing hosts, being at 294%. This makes sense when we think about the personal situation of a mid-listing host. Medium hosts are often in a transitional phase between casual and professional hosting. This middle stage typically involves active experimentation, which causes a higher range of prices, target demographics and seasonal changes. This phase should be gotten over with for the high-listing hosts, which given the experience, they are in a more standardized phase with more market domain and better predictability, that provoke a relatively-lower price range caused by some expenses being cut off which reflect at the final price. 
-
-This different boundaries also reflect when we see the price range difference, being higher in the mid-owning hosts explained by this experimental phase we've already talked about.
+The other graphs reveal an interesting relationship between host response time and success metrics on Airbnb. Fast responders clearly attract more bookings, shown by their significantly higher review counts, with some popular listings receiving over 400 reviews. However, quick responses don't automatically translate to better guest experiences. Both fast and slow responders maintain high ratings (mostly above 90), but slow responders actually show more consistent top scores, while some fast responders have concerning ratings below 80. Most surprisingly, our analysis found that slow responders have more "last-minute friendly" listings (35.42%) than fast responders (27.13%), challenging our initial assumption. This suggests that while quick communication helps secure bookings generally, other factors like location, pricing, and booking flexibility may matter more to last-minute travelers than simply how fast a host responds to messages. The data indicates that success in the touristic sector in Barcelona comes from balancing responsiveness with overall quality and guest experience, rather than just focusing on response speed.

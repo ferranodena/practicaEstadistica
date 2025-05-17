@@ -1,0 +1,52 @@
+```{r}
+dataset <- read.csv("./base_dades_districtes.csv")
+```
+
+## How does neighbourhood moderate the relationship between number of amenities and nightly price?
+```{r}
+# Make sure the neighbourhood variable is a factor if it is categorical
+dataset$neighbourhood <- as.factor(dataset$neighbourhood)
+
+# Fit the model with interaction to see how the neighborhood moderates the relationship between amenities and price
+model <- lm(price ~ amenities_count * neighbourhood, data = dataset)
+# Show the model summary
+summary(model)
+# Extract the coefficients from the model
+coefs <- coef(model)
+
+# We obtain the levels of the factor 'neighbourhood'
+neighbourhoods <- levels(dataset$neighbourhood)
+
+# Initialize a vector to store the effect of amenities_count for each neighborhood
+slope_effects <- numeric(length(neighbourhoods))
+
+# For the reference neighborhood, the effect is only the main coefficient
+slope_effects[1] <- coefs["amenities_count"]
+
+# For each other neighborhood, we sum the main effect and the corresponding interaction coefficient
+for(i in 2:length(neighbourhoods)) {
+  interaction_name <- paste0("amenities_count:neighbourhood", neighbourhoods[i])
+  slope_effects[i] <- coefs["amenities_count"] + coefs[interaction_name]
+}
+
+# Assign names to the vector of effects
+names(slope_effects) <- neighbourhoods
+
+# Create a bar plot to visualize the effects
+barplot(slope_effects, 
+        main = "Effect of amenities_count per neighbourhood", 
+        ylab = "Coefficient", 
+        xlab = "Neighbourhood", 
+        col = "lightgreen", 
+        las = 2)  # rotate x-axis labels
+
+# Add a horizontal line at zero for reference
+abline(h = 0, lty = 2)
+```
+Firstly, we build a linear regression model (lm) that includes an interaction between "amenities_count" and "neighbourhood". This is a key part: the interaction allows the model to figure out if the impact of amenities on the price changes depending on the neighborhood. For example, adding amenities might greatly increase the price in an upscale neighborhood, but have a smaller effect in a more working-class neighborhood.
+
+For the first neighborhood (called the reference neighborhood), which in our case is Ciutat Vella, the base effect is calculated by R. This is based on the effect of the number of amenities on the price, which is exactly the value of the main coefficient "amenities_count". However, for all other neighborhoods, we need to add this base coefficient to the interaction coefficient between amenities and the specific neighborhood. This calculation is done inside a loop, which constructs the exact name of the interaction variable and retrieves the corresponding value from the model.
+
+The resulting graph shows that, in Ciutat Vella, each amenity increases the price by 0.98 units. The other neighborhoods are compared to this increase in Ciutat Vella. The neighborhood where the difference is most noticeable is Gràcia. Gràcia used to be a working-class neighborhood, but it's now experiencing gentrification. This means it attracts a more local type of tourism, which might not require as many amenities as you would find in more luxurious neighborhoods of the city. The unique style of Gràcia is valued, which may attract a type of tourism that is equally expensive but less demanding in terms of the amenities offered. In contrast, in luxurious neighborhoods like Sarrià-Sant Gervasi and Les Corts, for a similar price to places like Gràcia or Ciutat Vella, a higher level of amenities is expected, which is not the case in more touristically well-located areas.
+
+The remaining neighborhoods have a similar balance to Ciutat Vella. This indicates that the amenities offered are valued based on the economic level of the area. The demands in neighborhoods like Nou Barris or Sants-Montjuïc, which are residential and traditionally working-class areas, are different from those in Ciutat Vella or Sant Martí. However, this difference may be offset by the price.
