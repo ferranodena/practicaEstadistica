@@ -20,7 +20,7 @@ ggplot(filtered_data, aes(x = square_feet, y = price)) +
 ```
 
 ```{r}
-# Barplot to compare average price by neighbourhood using log scale
+# Barplot to compare average price by neighbourhood
 library(ggplot2)
 
 # Remove rows with missing values in price or neighbourhood
@@ -29,14 +29,13 @@ filtered_data <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$neig
 # Calculate median price for labels
 median_prices <- aggregate(price ~ neighbourhood, filtered_data, median)
 
-ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = price)) +
+ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = price/1000)) +
   geom_boxplot(fill = "skyblue", alpha = 0.7) +
-  scale_y_log10(labels = scales::label_number(scale = 1e-3, suffix = "K")) +
   labs(
     title = "House Price Distribution by Neighbourhood",
-    subtitle = "Boxplots showing price spread in each area (log scale)",
+    subtitle = "Boxplots showing price spread in each area",
     x = "Neighbourhood",
-    y = "Price (Thousands $, log scale)"
+    y = "Price (Thousands $)"
   ) +
   theme_minimal() +
   theme(
@@ -46,50 +45,88 @@ ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = p
     axis.title = element_text(size = 12)
   )
 
-
 ```
 
 ```{r}
-library(ggplot2)
-
+# Scatter plot: Price vs Amenities Count
 real_estate <- read.csv("base_dades_districtes.csv")
-
-# Scatter plot: Price vs Amenities Count (log y-axis)
-filtered_data1 <- real_estate[!is.na(real_estate$price) & 
-                              !is.na(real_estate$amenities_count) &
-                              real_estate$price > 0, ]
+filtered_data1 <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$amenities_count), ]
 
 ggplot(filtered_data1, aes(x = amenities_count, y = price)) +
   geom_point(alpha = 0.6, color = "blue") +
   geom_smooth(method = "lm", se = TRUE, color = "red") +
-  scale_y_log10(labels = scales::label_dollar()) +
   labs(
-    title = "Price vs Amenities Count (Log Y-axis)",
+    title = "Price vs Amenities Count",
     x = "Amenities Count",
-    y = "Price ($, log scale)"
+    y = "Price ($)"
   ) +
   theme_minimal()
 
-# Scatter plot: Price vs Premium Amenities Count (log y-axis)
-filtered_data2 <- real_estate[!is.na(real_estate$price) & 
-                              !is.na(real_estate$amenities_premium_count) &
-                              real_estate$price > 0, ]
+# Scatter plot: Price vs Premium Amenities Count
+filtered_data2 <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$amenities_premium_count), ]
 
 ggplot(filtered_data2, aes(x = amenities_premium_count, y = price)) +
   geom_point(alpha = 0.6, color = "darkgreen") +
   geom_smooth(method = "lm", se = TRUE, color = "red") +
-  scale_y_log10(labels = scales::label_dollar()) +
   labs(
-    title = "Price vs Premium Amenities Count (Log Y-axis)",
+    title = "Price vs Premium Amenities Count",
     x = "Premium Amenities Count",
-    y = "Price ($, log scale)"
+    y = "Price ($)"
   ) +
   theme_minimal()
 
-# Correlation calculation (still in linear space)
+# Correlation calculation
 cor1 <- cor(filtered_data1$price, filtered_data1$amenities_count)
 cor2 <- cor(filtered_data2$price, filtered_data2$amenities_premium_count)
 print(paste("Correlation between price and amenities count:", round(cor1, 2)))
 print(paste("Correlation between price and premium amenities count:", round(cor2, 2)))
+```
 
+```{r}
+# Scatter plot: Price vs Square Feet
+real_estate <- read.csv("base_dades_districtes.csv")
+filtered_data_sqft <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$square_feet) & real_estate$square_feet > 0, ]
+
+ggplot(filtered_data_sqft, aes(x = square_feet, y = price)) +
+  geom_point(alpha = 0.6, color = "purple") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Price vs Square Feet",
+    x = "Square Feet",
+    y = "Price ($)"
+  ) +
+  theme_minimal()
+
+# Correlation calculation
+cor_sqft <- cor(filtered_data_sqft$price, filtered_data_sqft$square_feet)
+print(paste("Correlation between price and square feet:", round(cor_sqft, 2)))
+```
+```{r}
+
+# Scatter plot: Price vs Accommodates
+real_estate <- read.csv("base_dades_districtes.csv")
+filtered_data_acc <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$accommodates), ]
+
+# Calculate Q1 and Q3 for price
+Q1 <- quantile(filtered_data_acc$price, 0.25)
+Q3 <- quantile(filtered_data_acc$price, 0.75)
+IQR <- Q3 - Q1
+
+# Filter out extreme outliers (more than 1.5 * IQR)
+filtered_data_acc <- filtered_data_acc[filtered_data_acc$price <= (Q3 + 1.5 * IQR), ]
+
+ggplot(filtered_data_acc, aes(x = accommodates, y = price)) +
+  geom_point(alpha = 0.6, color = "orange") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Price vs Accommodates (Excluding Extreme Outliers)",
+    x = "Accommodates (Number of Guests)",
+    y = "Price ($)"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, Q3 + 1.5 * IQR))
+
+# Correlation calculation
+cor_acc <- cor(filtered_data_acc$price, filtered_data_acc$accommodates)
+print(paste("Correlation between price and accommodates:", round(cor_acc, 2)))
 ```
