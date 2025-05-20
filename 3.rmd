@@ -20,7 +20,7 @@ ggplot(filtered_data, aes(x = square_feet, y = price)) +
 ```
 
 ```{r}
-# Barplot to compare average price by neighbourhood
+# Barplot to compare average price by neighbourhood using log scale
 library(ggplot2)
 
 # Remove rows with missing values in price or neighbourhood
@@ -29,13 +29,14 @@ filtered_data <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$neig
 # Calculate median price for labels
 median_prices <- aggregate(price ~ neighbourhood, filtered_data, median)
 
-ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = price/1000)) +
+ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = price)) +
   geom_boxplot(fill = "skyblue", alpha = 0.7) +
+  scale_y_log10(labels = scales::label_number(scale = 1e-3, suffix = "K")) +
   labs(
     title = "House Price Distribution by Neighbourhood",
-    subtitle = "Boxplots showing price spread in each area",
+    subtitle = "Boxplots showing price spread in each area (log scale)",
     x = "Neighbourhood",
-    y = "Price (Thousands $)"
+    y = "Price (Thousands $, log scale)"
   ) +
   theme_minimal() +
   theme(
@@ -45,59 +46,50 @@ ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = p
     axis.title = element_text(size = 12)
   )
 
+
 ```
 
 ```{r}
-# Scatter plot: Price vs Amenities Count
+library(ggplot2)
+
 real_estate <- read.csv("base_dades_districtes.csv")
-filtered_data1 <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$amenities_count), ]
+
+# Scatter plot: Price vs Amenities Count (log y-axis)
+filtered_data1 <- real_estate[!is.na(real_estate$price) & 
+                              !is.na(real_estate$amenities_count) &
+                              real_estate$price > 0, ]
 
 ggplot(filtered_data1, aes(x = amenities_count, y = price)) +
   geom_point(alpha = 0.6, color = "blue") +
   geom_smooth(method = "lm", se = TRUE, color = "red") +
+  scale_y_log10(labels = scales::label_dollar()) +
   labs(
-    title = "Price vs Amenities Count",
+    title = "Price vs Amenities Count (Log Y-axis)",
     x = "Amenities Count",
-    y = "Price ($)"
+    y = "Price ($, log scale)"
   ) +
   theme_minimal()
 
-# Scatter plot: Price vs Premium Amenities Count
-filtered_data2 <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$amenities_premium_count), ]
+# Scatter plot: Price vs Premium Amenities Count (log y-axis)
+filtered_data2 <- real_estate[!is.na(real_estate$price) & 
+                              !is.na(real_estate$amenities_premium_count) &
+                              real_estate$price > 0, ]
 
 ggplot(filtered_data2, aes(x = amenities_premium_count, y = price)) +
   geom_point(alpha = 0.6, color = "darkgreen") +
   geom_smooth(method = "lm", se = TRUE, color = "red") +
+  scale_y_log10(labels = scales::label_dollar()) +
   labs(
-    title = "Price vs Premium Amenities Count",
+    title = "Price vs Premium Amenities Count (Log Y-axis)",
     x = "Premium Amenities Count",
-    y = "Price ($)"
+    y = "Price ($, log scale)"
   ) +
   theme_minimal()
 
-# Correlation calculation
+# Correlation calculation (still in linear space)
 cor1 <- cor(filtered_data1$price, filtered_data1$amenities_count)
 cor2 <- cor(filtered_data2$price, filtered_data2$amenities_premium_count)
 print(paste("Correlation between price and amenities count:", round(cor1, 2)))
 print(paste("Correlation between price and premium amenities count:", round(cor2, 2)))
-```
 
-```{r}
-# Scatter plot: Price vs Square Feet
-real_estate <- read.csv("base_dades_districtes.csv")
-filtered_data_sqft <- real_estate[!is.na(real_estate$price) & !is.na(real_estate$square_feet) & real_estate$square_feet > 0, ]
-
-ggplot(filtered_data_sqft, aes(x = square_feet, y = price)) +
-  geom_point(alpha = 0.6, color = "purple") +
-  geom_smooth(method = "lm", se = TRUE, color = "red") +
-  labs(
-    title = "Price vs Square Feet",
-    x = "Square Feet",
-    y = "Price ($)"
-  ) +
-  theme_minimal()
-
-# Correlation calculation
-cor_sqft <- cor(filtered_data_sqft$price, filtered_data_sqft$square_feet)
-print(paste("Correlation between price and square feet:", round(cor_sqft, 2)))
 ```
