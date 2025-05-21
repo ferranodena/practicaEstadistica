@@ -12,8 +12,8 @@ ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = p
   scale_y_log10(labels = scales::label_number(scale = 1e-3, suffix = "K")) +
   labs(
     title    = "Price distribution per neighbourhood (log scale)",
-    x        = "Barri",
-    y        = "Preu (milers €, log)"
+    x        = "Neighbourhood",
+    y        = "Price (hundred $, log)"
   ) +
   theme_minimal() +
   theme(
