@@ -381,7 +381,6 @@ corrplot(cor_matrix,
          number.cex = 0.7,   # Mida dels coeficients
          tl.cex = 0.7,       # Mida de les etiquetes
          col = colorRampPalette(c("#6D9EC1", "white", "#E46726"))(200),
-         title = "Mapa de correlacions entre les variables numèriques",
          mar = c(0, 0, 1, 0)) # Marges del gràfic
 
 # Crear una visualització més detallada amb números

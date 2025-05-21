@@ -1,0 +1,105 @@
+```{r}
+data <- read.csv("base_dades_districtes.csv")
+```
+
+```{r}
+# 3. Check column names and structure
+cat("\nColumn names:\n")
+print(names(data))
+
+cat("\nSummary of 'professionalism':\n")
+print(summary(data$professionalism))
+
+cat("\nSummary of 'review_scores_rating':\n")
+print(summary(data$review_scores_rating))
+
+# 4. Data cleaning (handle NAs and type conversion)
+data_clean <- data %>%
+  mutate(
+    professionalism = as.factor(ifelse(professionalism >= 0.5, "High", "Low")),  # Classify using threshold 0.5
+    review_scores_rating = as.numeric(review_scores_rating)  # Ensure numeric
+  ) %>%
+  filter(!is.na(review_scores_rating), !is.na(professionalism))  # Remove missing values
+
+cat("\nRows removed due to NAs:", nrow(data) - nrow(data_clean), "\n")
+
+# 5. Comparative boxplot
+ggplot(data_clean, aes(x = professionalism, y = review_scores_rating, fill = professionalism)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#FF6B6B", "#4ECDC4")) +
+  labs(
+    title = "Distribution of Review Scores by Professionalism Level",
+    x = "Professionalism",
+    y = "Review Score",
+    fill = "Level"
+  ) +
+  theme_minimal()
+
+# 6. Descriptive statistics by group
+cat("\nDescriptive statistics by professionalism group:\n")
+data_clean %>%
+  group_by(professionalism) %>%
+  summarise(
+    N = n(),
+    Mean = mean(review_scores_rating),
+    Median = median(review_scores_rating),
+    SD = sd(review_scores_rating),
+    Min = min(review_scores_rating),
+    Max = max(review_scores_rating)
+  ) %>%
+  print()
+```
+
+```{r}
+# 1. Load and prepare data with professionalism filter (CORREGIT)
+data_clean <- data %>%
+  mutate(
+    profile_pic = ifelse(host_has_profile_pic == "t", "Yes", "No"),
+    
+    listings_group = cut(host_listings_count,
+                         breaks = c(0, 5, 10, 20, Inf),
+                         labels = c("1-5", "6-10", "11-20", "21+")),
+    
+    response_time = case_when(
+      host_response_time == "within an hour" ~ "<1 hour",
+      host_response_time == "within a few hours" ~ "1-6 hours",
+      host_response_time == "within a day" ~ "6-24 hours",
+      host_response_time == "a few days or more" ~ ">24 hours",
+      TRUE ~ "Not available"
+    ) %>% factor(levels = c("<1 hour", "1-6 hours", "6-24 hours", ">24 hours", "Not available"))
+  ) %>%
+  filter(!is.na(review_scores_rating),
+         professionalism > 0.5)  # CORREGIT: filtrat per 'professionalism' (sense 'e' final)
+
+# 2. Data verification
+print("Response time summary after filtering:")
+print(table(data_clean$response_time, useNA = "always"))
+print(paste("Total observations after filter:", nrow(data_clean)))
+
+# 3. Final visualization (amb escala 0-100 com a l'original)
+ggplot(data_clean, aes(x = listings_group, y = review_scores_rating, fill = response_time)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge2(preserve = "single")) +
+  facet_wrap(~profile_pic) +
+  scale_fill_manual(
+    values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#7f7f7f"),
+    na.value = "#7f7f7f",
+    drop = FALSE
+  ) +
+  labs(
+    title = "Average rating by professionalism indicators (Professionalism > 0.5)",
+    subtitle = "Filtered: Only hosts with professionalism score above 0.5",
+    x = "Number of managed listings (grouped)",
+    y = "Average rating (0-100 scale)",
+    fill = "Response time"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    legend.position = "bottom",
+    plot.subtitle = element_text(color = "gray40")
+  ) +
+  ylim(0, 100) +  # Mantenim l'escala original
+  geom_hline(yintercept = mean(data_clean$review_scores_rating),  # Línia mitjana global
+             linetype = "dashed", color = "red", alpha = 0.5)
+
+```
