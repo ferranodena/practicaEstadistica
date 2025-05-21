@@ -1,0 +1,294 @@
+```{r}
+data <- read.csv("base_dades_districtes.csv")
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Remove rows with missing values in price or neighbourhood
+filtered_data <- data[!is.na(data$price) & !is.na(data$neighbourhood), ]
+ggplot(filtered_data, aes(x = reorder(neighbourhood, price, FUN = median), y = price)) +
+  geom_boxplot(fill = "skyblue", alpha = 0.7) +
+  scale_y_log10(labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  labs(
+    title    = "Price distribution per neighbourhood (log scale)",
+    x        = "Barri",
+    y        = "Preu (milers €, log)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x  = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title   = element_text(size = 14, face = "bold"),
+    plot.subtitle= element_text(size = 12),
+    axis.title   = element_text(size = 12)
+  )
+```
+```{r}
+# Scatter plot: Price vs Square Feet
+
+filtered_data_sqft <- data[!is.na(data$price) &
+                           !is.na(data$square_feet) &
+                           data$square_feet > 0, ]
+
+ggplot(filtered_data_sqft, aes(x = square_feet, y = price)) +
+  geom_point(alpha = 0.6, color = "purple") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Price vs Square Feet",
+    x = "Square Feet",
+    y = "Price ($)"
+  ) +
+  theme_minimal()
+
+# Correlation calculation
+cor_sqft <- cor(filtered_data_sqft$price, filtered_data_sqft$square_feet)
+print(paste("Correlation between price and square feet:", round(cor_sqft, 2)))
+```
+```{r}
+
+# Scatter plot: Price vs Accommodate
+filtered_data_acc <- data[!is.na(data$price) & !is.na(data$accommodates), ]
+
+# Calculate Q1 and Q3 for price
+Q1 <- quantile(filtered_data_acc$price, 0.25)
+Q3 <- quantile(filtered_data_acc$price, 0.75)
+IQR <- Q3 - Q1
+
+# Filter out extreme outliers (more than 1.5 * IQR)
+filtered_data_acc <- filtered_data_acc[filtered_data_acc$price <= (Q3 + 1.5 * IQR), ]
+
+ggplot(filtered_data_acc, aes(x = accommodates, y = price)) +
+  geom_point(alpha = 0.6, color = "orange") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Price vs Accommodates (Excluding Extreme Outliers)",
+    x = "Accommodates (Number of Guests)",
+    y = "Price ($)"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, Q3 + 1.5 * IQR))
+
+# Correlation calculation
+cor_acc <- cor(filtered_data_acc$price, filtered_data_acc$accommodates)
+print(paste("Correlation between price and accommodates:", round(cor_acc, 2)))
+```
+```{r}
+# 3. Data cleaning and preparation
+data <- data %>%
+  mutate(
+    amenities_count = as.numeric(amenities_count),
+    amenities_premium_count = as.numeric(amenities_premium_count),
+    price = as.numeric(price)
+  ) %>%
+  filter(
+    !is.na(amenities_count),
+    !is.na(amenities_premium_count),
+    !is.na(price)
+  )
+
+# 4. Filter outliers (adjust thresholds as needed)
+data_filtered <- data %>%
+  filter(
+    amenities_count <= 50,
+    amenities_premium_count <= 15,
+    price <= quantile(price, 0.95, na.rm = TRUE)
+  )
+
+# 5. Create combined scatter plot
+ggplot(data_filtered, aes(x = amenities_count, y = price, color = amenities_premium_count)) +
+  geom_point(alpha = 0.6, size = 2) +
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed") +
+  scale_color_gradient(low = "skyblue", high = "red", 
+                       name = "Premium Amenities Count") +
+  labs(
+    title = "Relationship Between Price, Total Amenities and Premium Amenities",
+    x = "Total Number of Amenities",
+    y = "Price (€)",
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 14),
+    plot.subtitle = element_text(hjust = 0.5, color = "gray40"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold")
+  )
+
+# 6. Optional: Save the plot
+ggsave("price_amenities_relationship.png", width = 10, height = 6, dpi = 300)
+
+```
+```{r}
+# First plot without number_of_reviews
+ggplot(data, aes(x = price, y = review_scores_rating)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", color = "red") +
+    labs(title = "Relationship between Price and Rating",
+         x = "Price",
+         y = "Rating") +
+    theme_minimal()
+
+# Correlation matrix with just price and rating
+cor_matrix <- cor(data[c("price", "review_scores_rating")])
+print(round(cor_matrix, 3))
+```
+
+```{r}
+# Gràfic: Preu vs Nombre de reviews, color segons puntuació
+ggplot(data, aes(x = price, y = number_of_reviews, color = review_scores_rating)) +
+  geom_point(alpha = 0.7, size = 2) +
+  scale_color_gradient(low = "yellow", high = "blue") +
+  labs(title = "Price vs Number of reviews (color: rating)",
+       x = "Price",
+       y = "Number of reviews",
+       color = "Rating") +
+  theme_minimal()
+```
+
+```{r}
+# Gràfic: Nombre de reviews vs Puntuació mitjana
+ggplot(data, aes(x = number_of_reviews, y = review_scores_rating)) +
+  geom_point(alpha = 0.6, color = "darkgreen", size = 2) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Number of reviews vs Average rating",
+       x = "Number of reviews",
+       y = "Average rating") +
+  theme_minimal()
+```
+
+
+
+
+
+```{r}
+# 1) Price vs Amenities Count
+filtered_data1 <- data %>%
+  filter(!is.na(price), !is.na(amenities_count), price > 0)
+ggplot(filtered_data1, aes(x = amenities_count, y = price)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  scale_y_log10(labels = scales::label_dollar(scale = 1e-3, suffix = "K")) +
+  labs(
+    title = "Price vs Amenities Count (Log Y‐axis)",
+    x     = "Amenities Count",
+    y     = "Price (Thousands $, log scale)"
+  ) +
+  theme_minimal()
+
+# 2) Price vs Premium Amenities Count
+filtered_data2 <- data %>%
+  filter(!is.na(price), !is.na(amenities_premium_count), price > 0)
+ggplot(filtered_data2, aes(x = amenities_premium_count, y = price)) +
+  geom_point(alpha = 0.6, color = "darkgreen") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  scale_y_log10(labels = scales::label_dollar(scale = 1e-3, suffix = "K")) +
+  labs(
+    title = "Price vs Premium Amenities Count (Log Y‐axis)",
+    x     = "Premium Amenities Count",
+    y     = "Price (Thousands $, log scale)"
+  ) +
+  theme_minimal()
+```
+
+
+
+```{r}
+# 3. Check column names and structure
+cat("\nColumn names:\n")
+print(names(data))
+
+cat("\nSummary of 'professionalism':\n")
+print(summary(data$professionalism))
+
+cat("\nSummary of 'review_scores_rating':\n")
+print(summary(data$review_scores_rating))
+
+# 4. Data cleaning (handle NAs and type conversion)
+data_clean <- data %>%
+  mutate(
+    professionalism = as.factor(ifelse(professionalism >= 0.5, "High", "Low")),  # Classify using threshold 0.5
+    review_scores_rating = as.numeric(review_scores_rating)  # Ensure numeric
+  ) %>%
+  filter(!is.na(review_scores_rating), !is.na(professionalism))  # Remove missing values
+
+cat("\nRows removed due to NAs:", nrow(data) - nrow(data_clean), "\n")
+
+# 5. Comparative boxplot
+ggplot(data_clean, aes(x = professionalism, y = review_scores_rating, fill = professionalism)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#FF6B6B", "#4ECDC4")) +
+  labs(
+    title = "Distribution of Review Scores by Professionalism Level",
+    x = "Professionalism",
+    y = "Review Score",
+    fill = "Level"
+  ) +
+  theme_minimal()
+
+# 6. Descriptive statistics by group
+cat("\nDescriptive statistics by professionalism group:\n")
+data_clean %>%
+  group_by(professionalism) %>%
+  summarise(
+    N = n(),
+    Mean = mean(review_scores_rating),
+    Median = median(review_scores_rating),
+    SD = sd(review_scores_rating),
+    Min = min(review_scores_rating),
+    Max = max(review_scores_rating)
+  ) %>%
+  print()
+```
+
+```{r}
+# 1. Load and prepare data with professionalism filter (CORREGIT)
+data_clean <- data %>%
+  mutate(
+    profile_pic = ifelse(host_has_profile_pic == "t", "Yes", "No"),
+    
+    listings_group = cut(host_listings_count,
+                         breaks = c(0, 5, 10, 20, Inf),
+                         labels = c("1-5", "6-10", "11-20", "21+")),
+    
+    response_time = case_when(
+      host_response_time == "within an hour" ~ "<1 hour",
+      host_response_time == "within a few hours" ~ "1-6 hours",
+      host_response_time == "within a day" ~ "6-24 hours",
+      host_response_time == "a few days or more" ~ ">24 hours",
+      TRUE ~ "Not available"
+    ) %>% factor(levels = c("<1 hour", "1-6 hours", "6-24 hours", ">24 hours", "Not available"))
+  ) %>%
+  filter(!is.na(review_scores_rating),
+         professionalism > 0.5)  # CORREGIT: filtrat per 'professionalism' (sense 'e' final)
+
+# 2. Data verification
+print("Response time summary after filtering:")
+print(table(data_clean$response_time, useNA = "always"))
+print(paste("Total observations after filter:", nrow(data_clean)))
+
+# 3. Final visualization (amb escala 0-100 com a l'original)
+ggplot(data_clean, aes(x = listings_group, y = review_scores_rating, fill = response_time)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge2(preserve = "single")) +
+  facet_wrap(~profile_pic) +
+  scale_fill_manual(
+    values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#7f7f7f"),
+    na.value = "#7f7f7f",
+    drop = FALSE
+  ) +
+  labs(
+    title = "Average rating by professionalism indicators (Professionalism > 0.5)",
+    subtitle = "Filtered: Only hosts with professionalism score above 0.5",
+    x = "Number of managed listings (grouped)",
+    y = "Average rating (0-100 scale)",
+    fill = "Response time"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    legend.position = "bottom",
+    plot.subtitle = element_text(color = "gray40")
+  ) +
+  ylim(0, 100) +  # Mantenim l'escala original
+  geom_hline(yintercept = mean(data_clean$review_scores_rating),  # Línia mitjana global
+             linetype = "dashed", color = "red", alpha = 0.5)
+
+```
