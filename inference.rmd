@@ -1,0 +1,30 @@
+data <- read.csv("base_dades_districtes.csv", stringsAsFactors = FALSE)
+# Calculate mean price
+mean_price <- mean(data$price, na.rm = TRUE)
+
+# Calculate confidence interval (95% by default)
+ci <- t.test(data$price)$conf.int
+
+# Print results
+cat("Mean price:", round(mean_price, 2), "\n")
+cat("95% Confidence Interval:", round(ci[1], 2), "to", round(ci[2], 2))
+
+# Calculate mean number of reviews
+mean_reviews <- mean(data$number_of_reviews, na.rm = TRUE)
+
+# Calculate confidence interval (95% by default)
+ci_reviews <- t.test(data$number_of_reviews)$conf.int
+
+# Print results
+cat("Mean number of reviews:", round(mean_reviews, 2), "\n")
+cat("95% Confidence Interval:", round(ci_reviews[1], 2), "to", round(ci_reviews[2], 2), "\n")
+
+# Calculate mean rating
+mean_rating <- mean(data$review_scores_rating, na.rm = TRUE)
+
+# Calculate confidence interval (95% by default)
+ci_rating <- t.test(data$review_scores_rating)$conf.int
+
+# Print results
+cat("Mean rating:", round(mean_rating, 2), "\n")
+cat("95% Confidence Interval:", round(ci_rating[1], 2), "to", round(ci_rating[2], 2), "\n")
