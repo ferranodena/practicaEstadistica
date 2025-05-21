@@ -10,15 +10,15 @@ and computes the professionalism and the premium ammenities count variables.
 
 print("Iniciant el procés de neteja i transformació de dades...")
 
-# 1. Carregar el dataset
+# 1. Load the dataset
 df = pd.read_csv(".//barcelona_listings.csv")
 
-# 2. Reduir la mida del dataset (p.ex. agafant només el 25% de les files)
+# 2. Reduce the dataset size (e.g., taking only 25% of the rows)
 df = df.sample(n= 5000, random_state=42)
 print(f"Dataset reduït a {df.shape[0]} files (25% de l'original)")
 print(f"Dataset carregat amb {df.shape[0]} files i {df.shape[1]} columnes")
 
-# 3. Seleccionar només les columnes que volem mantenir
+# 3. Select only the columns we want to keep
 columnes_a_mantenir = [
     "host_response_time",
     "host_listings_count",
@@ -36,15 +36,15 @@ columnes_a_mantenir = [
     "review_scores_rating"
 ]
 
-# Crear una còpia reduïda amb les columnes seleccionades
+# Create a reduced copy with the selected columns
 df_reduit = df[columnes_a_mantenir].copy()
 print(f"Dataset reduït a {len(columnes_a_mantenir)} columnes")
 
-# 4. Conversió de barris a districtes
+# 4. Convert neighborhoods to districts
 print("Normalitzant barris a districtes...")
-# Diccionari de correspondència barri-districte
+# Dictionary for neighborhood-district correspondence
 barris_a_districtes = {
-    # Districte 1: Ciutat Vella
+    # District 1: Ciutat Vella
     'Ciutat Vella': 'Ciutat Vella',
     'el Raval': 'Ciutat Vella',
     'El Raval': 'Ciutat Vella',
@@ -57,7 +57,7 @@ barris_a_districtes = {
     'Sant Pere/Santa Caterina': 'Ciutat Vella',
     'El Born': 'Ciutat Vella',
     
-    # Districte 2: Eixample
+    # District 2: Eixample
     'Eixample': 'Eixample',
     'el Fort Pienc': 'Eixample',
     'la Sagrada Família': 'Eixample',
@@ -70,7 +70,7 @@ barris_a_districtes = {
     "La Nova Esquerra de l'Eixample": 'Eixample',
     'Sant Antoni': 'Eixample',
     
-    # Districte 3: Sants-Montjuïc
+    # District 3: Sants-Montjuïc
     'Sants-Montjuïc': 'Sants-Montjuïc',
     'el Poble-Sec': 'Sants-Montjuïc',
     'El Poble-sec': 'Sants-Montjuïc',
@@ -83,14 +83,14 @@ barris_a_districtes = {
     'Sants - Badal': 'Sants-Montjuïc',
     'Sants': 'Sants-Montjuïc',
     
-    # Districte 4: Les Corts
+    # District 4: Les Corts
     'Les Corts': 'Les Corts',
     'les Corts': 'Les Corts',
     'la Maternitat i Sant Ramon': 'Les Corts',
     'La Maternitat i Sant Ramon': 'Les Corts',
     'Pedralbes': 'Les Corts',
     
-    # Districte 5: Sarrià-Sant Gervasi
+    # District 5: Sarrià-Sant Gervasi
     'Sarrià-Sant Gervasi': 'Sarrià-Sant Gervasi',
     'Sarrià': 'Sarrià-Sant Gervasi',
     'Vallvidrera, el Tibidabo i les Planes': 'Sarrià-Sant Gervasi',
@@ -101,7 +101,7 @@ barris_a_districtes = {
     'el Putxet i el Farró': 'Sarrià-Sant Gervasi',
     'El Putget i Farró': 'Sarrià-Sant Gervasi',
     
-    # Districte 6: Gràcia
+    # District 6: Gràcia
     'Gràcia': 'Gràcia',
     'Vallcarca i els Penitents': 'Gràcia',
     'el Coll': 'Gràcia',
@@ -113,7 +113,7 @@ barris_a_districtes = {
     "el Camp d'en Grassot i Gràcia Nova": 'Gràcia',
     "Camp d'en Grassot i Gràcia Nova": 'Gràcia',
     
-    # Districte 7: Horta-Guinardó
+    # District 7: Horta-Guinardó
     'Horta-Guinardó': 'Horta-Guinardó',
     'el Baix Guinardó': 'Horta-Guinardó',
     'El Baix Guinardó': 'Horta-Guinardó',
@@ -136,7 +136,7 @@ barris_a_districtes = {
     'la Clota': 'Horta-Guinardó',
     'Horta': 'Horta-Guinardó',
     
-    # Districte 8: Nou Barris
+    # District 8: Nou Barris
     'Nou Barris': 'Nou Barris',
     'Vilapicina i la Torre Llobeta': 'Nou Barris',
     'Porta': 'Nou Barris',
@@ -160,7 +160,7 @@ barris_a_districtes = {
     'Ciutat Meridiana': 'Nou Barris',
     'Vallbona': 'Nou Barris',
     
-    # Districte 9: Sant Andreu
+    # District 9: Sant Andreu
     'Sant Andreu': 'Sant Andreu',
     'Sant Andreu de Palomar': 'Sant Andreu',
     'la Trinitat Vella': 'Sant Andreu',
@@ -174,7 +174,7 @@ barris_a_districtes = {
     'El Congrés i els Indians': 'Sant Andreu',
     'Navas': 'Sant Andreu',
     
-    # Districte 10: Sant Martí
+    # District 10: Sant Martí
     'Sant Martí': 'Sant Martí',
     "el Camp de l'Arpa del Clot": 'Sant Martí',
     "El Camp de l'Arpa del Clot": 'Sant Martí',
@@ -198,19 +198,19 @@ barris_a_districtes = {
     'La Verneda i La Pau': 'Sant Martí'
 }
 
-# Funció millorada per assignar districte a cada barri
+# Improved function to assign district to each neighborhood
 def assignar_districte(barri):
     if pd.isna(barri):
         return 'Desconegut'
     
-    # Eliminar espais addicionals i normalitzar el text
+    # Remove extra spaces and normalize text
     barri_net = barri.strip()
     
-    # Buscar al diccionari
+    # Look up in the dictionary
     if barri_net in barris_a_districtes:
         return barris_a_districtes[barri_net]
     
-    # Solució per a barris problemàtics específics (paraules clau)
+    # Solution for specific problematic neighborhoods (keywords)
     barri_lower = barri_net.lower()
     
     if "font d'en fargues" in barri_lower or "font den fargues" in barri_lower:
@@ -219,74 +219,74 @@ def assignar_districte(barri):
     if "can baró" in barri_lower or "can baro" in barri_lower:
         return "Horta-Guinardó"
     
-    # Comprovar si són variacions d'altres barris
+    # Check if they are variations of other neighborhoods
     for barri_conegut, districte in barris_a_districtes.items():
         if barri_lower in barri_conegut.lower() or barri_conegut.lower() in barri_lower:
             return districte
     
-    # Si el barri no està al diccionari, imprimir per depurar
+    # If the neighborhood is not in the dictionary, print for debugging
     print(f"Barri no identificat: '{barri_net}'")
     
-    # Retornem el valor original
+    # Return the original value
     return barri_net
 
-# Aplicar la funció i crear mapeig
+# Apply the function and create mapping
 df_reduit['neighbourhood'] = df_reduit['neighbourhood'].apply(assignar_districte)
 
-# 5. Neteja i transformacions bàsiques
-# 1. Extraiem totes les llistes d’amenities
+# 5. Basic cleaning and transformations
+# 1. Extract all amenities lists
 amen_lists = df['amenities'] \
     .dropna() \
     .apply(lambda s: [a.strip() for a in s.split(',')])
 
-# 2. Comptem la freqüència de cada amenity
+# 2. Count the frequency of each amenity
 all_amenities = [amen for sub in amen_lists for amen in sub]
 freq = Counter(all_amenities)
 
-# 3. Definim el llindar del 10% del nombre total de llistings
+# 3. Define the 10% threshold of the total number of listings
 threshold = len(df) * 0.10
 
-# 4. Seleccionem les amenities “premium” (freq ≤ 10%)
+# 4. Select "premium" amenities (freq ≤ 10%)
 premium_amenities = {amen for amen, cnt in freq.items() if cnt <= threshold}
 
-# 5. Comptem per llistat quantes premium té
+# 5. Count how many premium amenities each listing has
 def count_premium(row):
     if pd.isna(row):
         return 0
     items = [a.strip() for a in row.split(',')]
     return sum(1 for a in items if a in premium_amenities)
 
-# 5. Comptem per llistat quantes premium té i creem la nova columna
+# 5. Count how many premium amenities each listing has and create the new column
 df['amenities_premium_count'] = df['amenities'].apply(count_premium)
 
 
-# 5.1 Crear nova columna amb el nombre d'amenities
+# 5.1 Create new column with the number of amenities
 print("Calculant el nombre d'amenities...")
 df_reduit["amenities_count"] = df["amenities"].apply(lambda x: len(re.findall(r'[^,{]+', str(x))) if pd.notna(x) else 0)
 
-# 5.2 Eliminar la columna antiga
+# 5.2 Remove the old column
 df_reduit = df_reduit.drop(columns=["amenities"])
 
-# 5.3 Neteja de la columna price
+# 5.3 Clean the price column
 print("Netejant la columna price...")
 df_reduit["price"] = df_reduit["price"].str.replace("$", "")
 df_reduit["price"] = df_reduit["price"].str.replace(",", "")
 df_reduit["price"] = df_reduit["price"].str.replace(".00", "")
 
-# 5.4 Eliminar files on price no és numèric
+# 5.4 Remove rows where price is not numeric
 files_abans = df_reduit.shape[0]
 df_reduit = df_reduit[pd.to_numeric(df_reduit["price"], errors='coerce').notnull()]
 files_eliminades = files_abans - df_reduit.shape[0]
 print(f"S'han eliminat {files_eliminades} files on price no era numèric")
 
-# 5.5 Convertir price a tipus numèric
+# 5.5 Convert price to numeric type
 df_reduit["price"] = pd.to_numeric(df_reduit["price"])
 
-# 6. Visualitzar distribució dels districtes
+# 6. View distribution of districts
 print("\nDistribució de les propietats per districte:")
 districtes_counts = df_reduit['neighbourhood'].value_counts()
 print(districtes_counts)
-# Funció per assignar valor a availability_365 segons els rangs especificats
+# Function to assign value to availability_365 according to specified ranges
 def availability_score(days):
     if pd.isna(days) or days < 0:
         return 0.0
@@ -301,7 +301,7 @@ def availability_score(days):
     else:
         return 1.0
 
-# Funció per assignar valor a host_listings_count segons els rangs especificats
+# Function to assign value to host_listings_count according to specified ranges
 def listings_score(count):
     if pd.isna(count) or count < 1:
         return 0.0
@@ -316,7 +316,7 @@ def listings_score(count):
     else:
         return 1.0
 
-# Diccionari per assignar valors a host_response_time
+# Dictionary to assign values to host_response_time
 response_time_values = {
     'within an hour': 1.0,
     'within a few hours': 0.75,
@@ -324,27 +324,27 @@ response_time_values = {
     'a few days or more': 0.25
 }
 
-# Aplicar les funcions per crear les variables de puntuació
+# Apply functions to create the score variables
 df['availability_score'] = df['availability_365'].apply(availability_score)
 df['listings_score'] = df['host_listings_count'].apply(listings_score)
 df['response_time_score'] = df['host_response_time'].map(response_time_values).fillna(0.0)
 
-# Calcular professionalism com una mitjana ponderada
+# Calculate professionalism as a weighted average
 df['professionalism'] = (
     0.5 * df['availability_score'] +
     0.25 * df['listings_score'] +
     0.25 * df['response_time_score']
 )
 
-# 7. Desar els resultats
+# 7. Save the results
 df_reduit['amenities_premium_count'] = df['amenities_premium_count']
 df_reduit['professionalism']            = df['professionalism']
 df_reduit.to_csv("base_dades_districtes.csv", index=False)
 print("Base de dades transformada i guardada com 'base_dades_districtes.csv'")
 
-# Mostrar un resum final
+# Show a final summary
 print("\nResum final:")
 print(f"Registres inicials: {df.shape[0]}")
 print(f"Registres finals: {df_reduit.shape[0]}")
-print(f"Columnes seleccionades: {len(columnes_a_mantenir) - 1 + 1}")  # -1 per amenities, +1 per amenities_count
+print(f"Columnes seleccionades: {len(columnes_a_mantenir) - 1 + 1}")  # -1 for amenities, +1 for amenities_count
 print("Procés completat amb èxit!")

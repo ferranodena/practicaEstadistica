@@ -1,9 +1,0 @@
-El nostre treball té l'objectiu de fer una anàlisi del mercat immobiliari de Barcelona, sobretot en l'apartat turistic
-
-Volem fer una visio general del mercat d'airbnbs a Barcelona
-
-Fer un arxiu .r o .rmd per cada pregunta plantejada, per separat
-
-Despres fer l'anàlisi dels resultats obtinguts i conclusions
-
-Al principi fer una explicació extensa de les nostres variables i els nostres objectius
