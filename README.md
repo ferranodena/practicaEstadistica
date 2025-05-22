@@ -20,7 +20,7 @@ This repository contains a statistical analysis of Airbnb listings in Barcelona,
   - `general_analysis.rmd`: General analysis of the dataset
   - `inference.rmd`: Inference analysis
 - `graphs/`: Contains the 20+ graphs used in the project, ordered by their appearance in the report
-  - `base_dades_districtes.csv`: Processed data again, necessary to be here to be able to run the graphs
+- `base_dades_districtes.csv`: Processed data again, necessary to be here to be able to run the graphs
 - `README.md`: This file
 
 ## Authors
