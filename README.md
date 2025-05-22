@@ -1,8 +1,8 @@
-# Statistics Practice Project
+# Airbnb Barcelona Analysis
 
 ## Overview
 
-This repository contains the statistical analysis of Airbnb listings in Barcelona. The project applies fundamental statistical concepts to analyze accommodation patterns, pricing, and neighborhood characteristics across Barcelona's districts.
+This repository contains a statistical analysis of Airbnb listings in Barcelona, examining how short-term rentals impact the city's housing market through data-driven insights. We analyse accommodation patterns, pricing structures, and neighbourhood characteristics while highlighting both economic benefits and challenges associated with the platform's growth. Our approach includes descriptive statistics, correlation studies, and visual representations to identify market trends and inequalities across districts. This project is relevant as Barcelona balances tourism demands with residents' needs, especially as housing decisions become increasingly difficult for locals and students.
 
 ## Repository Structure
 
