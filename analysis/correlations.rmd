@@ -1,0 +1,48 @@
+## Correlation map computing
+```{r}
+data <- read.csv(".\\base_dades_districtes.csv")
+```	
+
+```{r}
+# 1. View the classes of each column
+str(data)
+
+# 2. Filter only numeric columns
+data_numeric <- data[, sapply(data, is.numeric)]
+
+# 3. Calculate correlation matrix with numeric columns only
+cor_matrix <- cor(data_numeric, use = "complete.obs")
+
+# 4. Display the correlation matrix
+print(cor_matrix)
+
+# Load required libraries
+if (!requireNamespace("corrplot", quietly = TRUE)) {
+  install.packages("corrplot")
+}
+library(corrplot)
+
+# Filter only numeric columns (excluding those created for professionalism calculation)
+cols_to_exclude <- c("availability_score", "listings_score", "response_time_score")
+cols_to_exclude <- cols_to_exclude[cols_to_exclude %in% names(data_numeric)]  # Ensure columns exist
+data_numeric_filtered <- data_numeric[, !names(data_numeric) %in% cols_to_exclude]
+
+# Calculate the correlation matrix
+cor_matrix <- cor(data_numeric_filtered, use = "pairwise.complete.obs")
+
+# Visualize the correlation map with colored rectangles instead of circles
+corrplot(cor_matrix, 
+         method = "color",   # Use solid colors instead of circles
+         type = "upper",     # Show only the upper part of the matrix
+         order = "hclust",   # Order variables by correlation similarity
+         tl.col = "black",   # Color of label text
+         tl.srt = 45,        # Text rotation (45 degrees)
+         addCoef.col = "black", # Color of coefficients
+         number.cex = 0.7,   # Size of coefficients
+         tl.cex = 0.7,       # Size of labels
+         col = colorRampPalette(c("#6D9EC1", "white", "#E46726"))(200),
+         mar = c(0, 0, 1, 0)) # Graph margins
+
+# Create a more detailed visualization with numbers
+par(mfrow = c(1, 1))  # Reset the graph configuration
+```
